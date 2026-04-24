@@ -295,6 +295,54 @@ label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-trans
 .receipt-paper .r-total-row.grand{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;border-top:2px solid #111;margin-top:8px;padding-top:10px;}
 .receipt-paper .r-footer{text-align:center;font-size:11px;color:#aaa;margin-top:16px;}
 .receipt-paper .r-mode{display:inline-block;background:#e0f2fe;color:#0284c7;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;margin-bottom:2px;}
+
+/* ───── LIGHT MODE ───── */
+body.light-mode {
+  --bg:#f0f2f7;--surface:#ffffff;--surface2:#f5f6fa;--surface3:#e8eaf2;
+  --border:#d0d5e8;--border2:#b8bfe0;
+  --text:#1a1a3e;--muted:#6b6b9a;--muted2:#5050a0;
+  --accent:#0ea5e9;--accent2:#0284c7;--accent-glow:rgba(14,165,233,.18);
+  --gold:#d97706;--gold2:#b45309;
+  --green:#059669;--green2:#047857;
+  --red:#dc2626;--red2:#b91c1c;
+  --shadow:0 8px 32px rgba(0,0,0,.12);
+}
+body.light-mode .login-card{background:rgba(255,255,255,.97);}
+body.light-mode .topbar{background:var(--surface);border-color:var(--border);}
+body.light-mode .tabbar{background:var(--surface);border-color:var(--border);}
+body.light-mode .card{background:var(--surface);border-color:var(--border);}
+body.light-mode input[type=text],body.light-mode input[type=number],body.light-mode input[type=email],body.light-mode input[type=password],body.light-mode select,body.light-mode textarea{background:var(--surface2);border-color:var(--border2);color:var(--text);}
+body.light-mode select option{background:#fff;color:#1a1a3e;}
+body.light-mode .panier-card,body.light-mode .paiement-card{background:var(--surface);border-color:var(--border);}
+body.light-mode .panier-item{background:var(--surface2);border-color:var(--border);}
+body.light-mode .hist-table-wrap{background:var(--surface);border-color:var(--border);}
+body.light-mode .stat-card{background:var(--surface);border-color:var(--border);}
+body.light-mode .modal-box{background:var(--surface);border-color:var(--border);}
+body.light-mode .article-card{background:var(--surface);border-color:var(--border);}
+body.light-mode .articles-form-card{background:var(--surface);border-color:var(--border);}
+body.light-mode .login-bg-glow{background:radial-gradient(ellipse 50% 60% at 20% 50%,rgba(14,165,233,.1) 0%,transparent 60%),radial-gradient(ellipse 40% 50% at 80% 30%,rgba(245,158,11,.07) 0%,transparent 60%);}
+body.light-mode .user-chip{background:var(--surface2);border-color:var(--border2);}
+body.light-mode .btn-outline{background:transparent;border-color:var(--border2);color:var(--text);}
+body.light-mode .log-item{background:var(--surface2);}
+body.light-mode .diag-node{background:var(--surface2);border-color:var(--border2);}
+body.light-mode .mode-btn{background:var(--surface2);border-color:var(--border2);}
+body.light-mode .rendu-box{background:rgba(5,150,105,.05);}
+body.light-mode .paiement-total-summary{background:linear-gradient(135deg,rgba(14,165,233,.06),rgba(245,158,11,.03));}
+body.light-mode .receipt-btn{background:var(--surface2);border-color:var(--border2);}
+
+
+/* ───── PAGE ACHATS ───── */
+.achats-layout{display:grid;grid-template-columns:320px 1fr;gap:22px;align-items:start;}
+@media(max-width:1000px){.achats-layout{grid-template-columns:1fr;}}
+.achat-cat-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;}
+/* ───── COMPTABILITE ───── */
+.bilan-row{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:7px;font-size:12px;background:var(--surface2);}
+.bilan-compte{color:var(--muted2);font-size:10px;font-weight:700;margin-right:6px;}
+.gl-debit{color:var(--red2);font-weight:700;}
+.gl-credit{color:var(--green2);font-weight:700;}
+.gl-solde{font-family:'Syne',sans-serif;font-weight:700;}
+.mode-bar{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .5s;}
+
 </style>
 </head>
 <body>
@@ -344,6 +392,7 @@ label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-trans
     </div>
     <div class="topbar-right">
       <div class="user-chip"><div class="user-dot-g"></div><span id="tb-username">—</span></div>
+      <button id="theme-toggle-btn" onclick="toggleTheme()" style="background:transparent;border:1px solid var(--border2);border-radius:8px;padding:7px 12px;color:var(--muted2);font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .18s;" title="Mode clair/sombre">🌙</button>
       <button class="btn-logout" onclick="doLogout()">Déconnexion</button>
     </div>
   </div>
@@ -353,6 +402,8 @@ label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-trans
     <button class="tab-btn" data-tab="articles" onclick="showTab('articles',this)">📦 Articles</button>
     <button class="tab-btn" data-tab="historique" onclick="showTab('historique',this)">📋 Historique</button>
     <button class="tab-btn" id="tab-btn-acces" data-tab="acces" onclick="showTab('acces',this)">🔑 Accès</button>
+    <button class="tab-btn" id="tab-btn-achats" data-tab="achats" onclick="showTab('achats',this)">🛍 Achats</button>
+    <button class="tab-btn" id="tab-btn-compta" data-tab="compta" onclick="showTab('compta',this)">📒 Comptabilité</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════
@@ -567,6 +618,7 @@ label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-trans
         </select>
         <button class="btn btn-outline" onclick="resetHistFilters()">↺ Réinitialiser</button>
         <button class="btn btn-primary" onclick="exportCSV()">📊 Exporter CSV</button>
+        <button class="btn btn-danger" id="btn-delete-all-hist" onclick="deleteAllTransactions()" style="display:none;">🗑 Tout supprimer</button>
       </div>
       <!-- Table -->
       <div class="hist-table-wrap">
@@ -642,7 +694,7 @@ label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-trans
           </div>
           <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted2);">
             <div>🔑 <strong>Admin</strong> — Accès complet : caisse, articles, historique, accès</div>
-            <div>👨‍💼 <strong>Personnel</strong> — Accès : caisse, articles, historique (sans gestion accès)</div>
+            <div>👨‍💼 <strong>Personnel</strong> — Accès : articles (lecture), historique (téléchargement reçu image seulement)</div>
           </div>
         </div>
       </div>
@@ -680,8 +732,8 @@ label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-trans
     <div class="modal-body">
       <div id="receipt-content"></div>
       <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;flex-wrap:wrap;">
-        <button class="btn btn-outline" onclick="printReceipt()">🖨 Imprimer</button>
-        <button class="btn btn-primary" onclick="downloadReceipt()">⬇ Télécharger</button>
+        <button class="btn btn-outline" id="btn-print-receipt" onclick="printReceipt()">🖨 Imprimer</button>
+        <button class="btn btn-primary" onclick="downloadReceiptImage()">📸 Télécharger (image)</button>
         <button class="btn btn-outline" onclick="closeModal('receipt-modal')">Fermer</button>
       </div>
     </div>
@@ -709,8 +761,211 @@ label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-trans
       </div>
     </div>
   </div>
-</div>
 
+  <!-- ══════════════════════════════════════════════════
+       TAB ACHATS
+  ══════════════════════════════════════════════════ -->
+  <div class="tab-content" id="tab-achats">
+    <div style="padding:22px 28px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Achats</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px;">Enregistrement des achats fournisseurs</div>
+      </div>
+    </div>
+    <div class="achats-layout" style="padding:0 28px 28px;">
+      <!-- Formulaire -->
+      <div class="card" style="height:fit-content;position:sticky;top:calc(var(--topbar-h)+var(--tabbar-h)+20px);">
+        <div class="card-title">➕ Nouvel achat</div>
+        <div class="field"><label>Fournisseur *</label><input type="text" id="achat-fournisseur" placeholder="Ex: Metro, Promocash..."></div>
+        <div class="field"><label>Catégorie *</label>
+          <select id="achat-categorie">
+            <option value="">— Choisir —</option>
+            <option value="marchandises">Marchandises</option>
+            <option value="boissons">Boissons</option>
+            <option value="frais_generaux">Frais généraux</option>
+            <option value="emballages">Emballages</option>
+            <option value="materiel">Matériel</option>
+            <option value="entretien">Entretien</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+        <div class="field"><label>Description</label><input type="text" id="achat-description" placeholder="Description de l'achat"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="field"><label>Montant HT (€) *</label><input type="number" id="achat-ht" placeholder="0.00" min="0" step="0.01" oninput="calcAchatTVA()"></div>
+          <div class="field"><label>TVA (%)</label>
+            <select id="achat-tva-rate" onchange="calcAchatTVA()">
+              <option value="20">20%</option>
+              <option value="10">10%</option>
+              <option value="5.5">5,5%</option>
+              <option value="0">0%</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>TTC calculé</label>
+          <div style="background:var(--surface3);border:1px solid var(--border2);border-radius:9px;padding:10px 13px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--accent);" id="achat-ttc-display">0,00 €</div>
+        </div>
+        <div class="field"><label>Mode de paiement</label>
+          <select id="achat-mode">
+            <option value="especes">💵 Espèces</option>
+            <option value="carte">💳 Carte bancaire</option>
+            <option value="cheque">🧾 Chèque</option>
+            <option value="virement">🏦 Virement</option>
+            <option value="credit">⏳ Crédit fournisseur</option>
+          </select>
+        </div>
+        <div class="field"><label>Date *</label><input type="date" id="achat-date"></div>
+        <div class="field"><label>N° Facture (optionnel)</label><input type="text" id="achat-facture" placeholder="FAC-2024-001"></div>
+        <div class="field"><label>Note</label><textarea id="achat-note" rows="2" placeholder="Remarques..."></textarea></div>
+        <button class="btn btn-primary" style="width:100%;padding:12px;" onclick="saveAchat()">💾 Enregistrer l'achat</button>
+        <div id="achat-err" style="display:none;margin-top:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--red2);"></div>
+      </div>
+      <!-- Liste achats -->
+      <div>
+        <!-- Stats achats -->
+        <div class="stats-strip" style="margin-bottom:18px;">
+          <div class="stat-card"><div class="s-label">Total achats</div><div class="s-value" id="achat-stat-count">0</div><div class="s-sub">enregistrés</div></div>
+          <div class="stat-card"><div class="s-label">Dépenses HT</div><div class="s-value" id="achat-stat-ht" style="color:var(--red2)">0,00 €</div><div class="s-sub">total</div></div>
+          <div class="stat-card"><div class="s-label">TVA déductible</div><div class="s-value" id="achat-stat-tva" style="color:var(--gold)">0,00 €</div><div class="s-sub">total</div></div>
+          <div class="stat-card"><div class="s-label">Dépenses TTC</div><div class="s-value" id="achat-stat-ttc" style="color:var(--accent)">0,00 €</div><div class="s-sub">total</div></div>
+        </div>
+        <!-- Filtre -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+          <input type="text" id="achat-search" placeholder="🔍 Fournisseur, description..." oninput="renderAchats()" style="width:220px;">
+          <select id="achat-cat-filter" onchange="renderAchats()" style="width:160px;">
+            <option value="">Toutes catégories</option>
+            <option value="marchandises">Marchandises</option>
+            <option value="boissons">Boissons</option>
+            <option value="frais_generaux">Frais généraux</option>
+            <option value="emballages">Emballages</option>
+            <option value="materiel">Matériel</option>
+            <option value="entretien">Entretien</option>
+            <option value="autre">Autre</option>
+          </select>
+          <input type="month" id="achat-month-filter" onchange="renderAchats()">
+        </div>
+        <!-- Table achats -->
+        <div class="hist-table-wrap">
+          <table class="hist-table">
+            <thead><tr>
+              <th>Date</th><th>Fournisseur</th><th>Catégorie</th><th>Description</th>
+              <th>HT</th><th>TVA</th><th>TTC</th><th>Mode</th><th>Facture</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="achats-tbody"><tr><td colspan="10" class="hist-empty">Aucun achat enregistré</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TAB COMPTABILITÉ
+  ══════════════════════════════════════════════════ -->
+  <div class="tab-content" id="tab-compta">
+    <div style="padding:22px 28px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Comptabilité</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px;">Bilan et Grand Livre — Supérette française</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <select id="compta-period" onchange="renderCompta()" style="width:160px;">
+          <option value="month">Ce mois</option>
+          <option value="quarter">Ce trimestre</option>
+          <option value="year">Cette année</option>
+          <option value="all">Tout</option>
+        </select>
+        <button class="btn btn-primary" onclick="renderCompta()">🔄 Actualiser</button>
+        <button class="btn btn-outline" onclick="exportComptaCSV()">📊 Exporter</button>
+      </div>
+    </div>
+    <div style="padding:0 28px 28px;display:flex;flex-direction:column;gap:22px;">
+
+      <!-- KPIs -->
+      <div class="stats-strip" id="compta-kpis">
+        <div class="stat-card"><div class="s-label">Chiffre d'affaires TTC</div><div class="s-value" id="ck-ca" style="color:var(--green2)">0,00 €</div><div class="s-sub">ventes</div></div>
+        <div class="stat-card"><div class="s-label">Achats TTC</div><div class="s-value" id="ck-achats" style="color:var(--red2)">0,00 €</div><div class="s-sub">dépenses</div></div>
+        <div class="stat-card"><div class="s-label">Marge brute</div><div class="s-value" id="ck-marge" style="color:var(--accent)">0,00 €</div><div class="s-sub">CA - Achats HT</div></div>
+        <div class="stat-card"><div class="s-label">TVA collectée</div><div class="s-value" id="ck-tva-c" style="color:var(--gold)">0,00 €</div><div class="s-sub">à reverser</div></div>
+        <div class="stat-card"><div class="s-label">TVA déductible</div><div class="s-value" id="ck-tva-d" style="color:var(--gold2)">0,00 €</div><div class="s-sub">sur achats</div></div>
+        <div class="stat-card"><div class="s-label">TVA nette due</div><div class="s-value" id="ck-tva-net" style="color:var(--red2)">0,00 €</div><div class="s-sub">à payer</div></div>
+        <div class="stat-card"><div class="s-label">Résultat net</div><div class="s-value" id="ck-result" style="color:var(--green2)">0,00 €</div><div class="s-sub">estimé</div></div>
+        <div class="stat-card"><div class="s-label">Transactions</div><div class="s-value" id="ck-tx">0</div><div class="s-sub">ventes</div></div>
+      </div>
+
+      <!-- Bilan et Grand Livre en 2 colonnes -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;">
+
+        <!-- BILAN -->
+        <div class="card">
+          <div class="card-title">📊 Bilan simplifié</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <!-- ACTIF -->
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--green2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px;">ACTIF</div>
+              <div id="bilan-actif" style="display:flex;flex-direction:column;gap:6px;"></div>
+              <div style="border-top:2px solid var(--border2);margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;font-family:'Syne',sans-serif;font-weight:800;">
+                <span style="font-size:12px;">Total Actif</span>
+                <span style="color:var(--green2);" id="bilan-total-actif">0,00 €</span>
+              </div>
+            </div>
+            <!-- PASSIF -->
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--red2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px;">PASSIF</div>
+              <div id="bilan-passif" style="display:flex;flex-direction:column;gap:6px;"></div>
+              <div style="border-top:2px solid var(--border2);margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;font-family:'Syne',sans-serif;font-weight:800;">
+                <span style="font-size:12px;">Total Passif</span>
+                <span style="color:var(--red2);" id="bilan-total-passif">0,00 €</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RÉPARTITION PAR MODE -->
+        <div class="card">
+          <div class="card-title">💳 Répartition encaissements</div>
+          <div id="compta-modes" style="display:flex;flex-direction:column;gap:8px;"></div>
+          <div style="margin-top:18px;">
+            <div class="card-title">🛍 Achats par catégorie</div>
+            <div id="compta-achat-cats" style="display:flex;flex-direction:column;gap:6px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRAND LIVRE -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="card-title" style="margin-bottom:0;">📖 Grand Livre</div>
+          <div style="display:flex;gap:8px;">
+            <select id="gl-compte-filter" onchange="renderGrandLivre()" style="width:200px;font-size:12px;">
+              <option value="">Tous les comptes</option>
+              <option value="70">70 — Ventes de marchandises</option>
+              <option value="60">60 — Achats de marchandises</option>
+              <option value="53">53 — Caisse (espèces)</option>
+              <option value="51">51 — Banque (carte)</option>
+              <option value="44571">44571 — TVA collectée</option>
+              <option value="44566">44566 — TVA déductible</option>
+            </select>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="hist-table" style="min-width:750px;">
+            <thead><tr>
+              <th>Date</th><th>N° Compte</th><th>Libellé</th><th>Réf. pièce</th>
+              <th style="text-align:right;">Débit</th><th style="text-align:right;">Crédit</th><th style="text-align:right;">Solde</th>
+            </tr></thead>
+            <tbody id="gl-tbody"><tr><td colspan="7" class="hist-empty">Sélectionnez une période</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+<!-- Auto-logout warning -->
+<div id="auto-logout-warn" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(90deg,#d97706,#f59e0b);color:#fff;padding:12px 24px;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;gap:10px;">
+  <span>⏱ Vous serez déconnecté automatiquement dans 1 minute pour inactivité.</span>
+  <button onclick="resetAutoLogout();document.getElementById('auto-logout-warn').style.display='none';" style="background:rgba(255,255,255,.25);border:none;border-radius:6px;padding:5px 12px;color:#fff;cursor:pointer;font-weight:700;">Rester connecté</button>
+</div>
 <!-- Toasts -->
 <div class="toast-wrap" id="toast-wrap"></div>
 
@@ -818,6 +1073,7 @@ async function ensureDefaultAdmin(){
 }
 
 function doLogout(){
+  stopAutoLogout();
   const sess=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');
   if(sess?.logId) fbSave('pos_connlog',sess.logId,{id:sess.logId,username:currentUser?.username||'',loginTime:'',logoutTime:new Date().toISOString()}).catch(()=>{});
   sessionStorage.removeItem(SESSION_KEY);
@@ -878,6 +1134,10 @@ async function launchApp(){
     renderArticlesPage();
     renderHistorique();
     if(currentUser.role==='admin'){renderAccesPage();}
+    applyRoleRestrictions();
+    startAutoLogout();
+    loadAchats();
+    initTheme();
   },300);
 }
 
@@ -891,6 +1151,7 @@ function showTab(id,btn){
   if(btn)btn.classList.add('active');
   if(id==='historique'){renderHistorique();}
   if(id==='acces'&&currentUser.role==='admin'){renderAccesPage();}
+  if(id==='compta'){renderCompta();}
 }
 
 // ─────────────────────────────────────────────────────────
@@ -1345,6 +1606,10 @@ function exportCSV(){
 // ─────────────────────────────────────────────────────────
 let currentReceiptTx=null;
 function showReceipt(txId){
+  // Show/hide print btn based on role
+  const printBtn=document.getElementById('btn-print-receipt');
+  if(printBtn) printBtn.style.display=(currentUser&&currentUser.role==='admin')?'inline-flex':'none';
+
   const tx=transactions.find(t=>t.id===txId);
   if(!tx)return;
   currentReceiptTx=tx;
@@ -1514,10 +1779,503 @@ async function deleteUser(id){
   toast('Utilisateur supprimé','info');
 }
 
+
+// ─────────────────────────────────────────────────────────
+//  THEME TOGGLE
+// ─────────────────────────────────────────────────────────
+const THEME_KEY = 'caisse_theme';
+function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY)||'dark';
+  if(saved==='light') applyLight(); else applyDark();
+}
+function applyLight(){
+  document.body.classList.add('light-mode');
+  const btn=document.getElementById('theme-toggle-btn');
+  if(btn)btn.textContent='☀️';
+  localStorage.setItem(THEME_KEY,'light');
+}
+function applyDark(){
+  document.body.classList.remove('light-mode');
+  const btn=document.getElementById('theme-toggle-btn');
+  if(btn)btn.textContent='🌙';
+  localStorage.setItem(THEME_KEY,'dark');
+}
+function toggleTheme(){
+  if(document.body.classList.contains('light-mode')) applyDark();
+  else applyLight();
+}
+
+// ─────────────────────────────────────────────────────────
+//  AUTO-LOGOUT ADMIN (30 min inactivité)
+// ─────────────────────────────────────────────────────────
+let autoLogoutTimer = null;
+const AUTO_LOGOUT_MS = 30 * 60 * 1000;
+let autoLogoutWarningTimer = null;
+
+function resetAutoLogout(){
+  if(!currentUser||currentUser.role!=='admin') return;
+  clearTimeout(autoLogoutTimer);
+  clearTimeout(autoLogoutWarningTimer);
+  const warnEl = document.getElementById('auto-logout-warn');
+  if(warnEl) warnEl.style.display='none';
+  // Avertir 1 min avant
+  autoLogoutWarningTimer = setTimeout(()=>{
+    const w=document.getElementById('auto-logout-warn');
+    if(w) w.style.display='flex';
+  }, AUTO_LOGOUT_MS - 60000);
+  autoLogoutTimer = setTimeout(()=>{
+    toast('⏱ Déconnexion automatique (inactivité)','info');
+    setTimeout(doLogout, 1500);
+  }, AUTO_LOGOUT_MS);
+}
+function startAutoLogout(){
+  if(!currentUser||currentUser.role!=='admin') return;
+  ['click','keydown','mousemove','touchstart'].forEach(ev=>{
+    document.addEventListener(ev, resetAutoLogout, {passive:true});
+  });
+  resetAutoLogout();
+}
+function stopAutoLogout(){
+  clearTimeout(autoLogoutTimer);
+  clearTimeout(autoLogoutWarningTimer);
+  ['click','keydown','mousemove','touchstart'].forEach(ev=>{
+    document.removeEventListener(ev, resetAutoLogout);
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+//  RESTRICT PERSONNEL TABS
+// ─────────────────────────────────────────────────────────
+function applyRoleRestrictions(){
+  const isAdmin = currentUser.role==='admin';
+  // Admin-only tabs
+  ['tab-btn-acces','tab-btn-achats','tab-btn-compta'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=isAdmin?'':'none';
+  });
+  // Hide caisse tab for personnel? No — show caisse + articles + historique
+  // Personnel: hide caisse btn? Actually caisse is shown for all. Check instructions:
+  // "personnel ai acces uniquement au pages articles et historique"
+  // So hide caisse for personnel
+  const caisseBtn = document.querySelector('[data-tab="caisse"]');
+  if(caisseBtn) caisseBtn.style.display=isAdmin?'':'none';
+  // Hide delete all button for non-admin
+  const delAllBtn=document.getElementById('btn-delete-all-hist');
+  if(delAllBtn) delAllBtn.style.display=isAdmin?'inline-flex':'none';
+  // Articles form: hide add/edit/delete for personnel
+  const formCard=document.querySelector('.articles-form-card');
+  if(formCard) formCard.style.display=isAdmin?'':'none';
+  // If personnel, show articles tab but read-only
+  if(!isAdmin){
+    // Start on articles tab
+    showTab('articles',document.querySelector('[data-tab="articles"]'));
+  }
+}
+
+// Override showTab to block personnel from accessing restricted tabs
+const _origShowTab = window.showTab;
+window.showTab = function(id, btn){
+  const isAdmin = currentUser&&currentUser.role==='admin';
+  const restrictedForPersonnel = ['caisse','acces','achats','compta'];
+  if(!isAdmin && restrictedForPersonnel.includes(id)){
+    toast('Accès réservé aux administrateurs','error');
+    return;
+  }
+  _origShowTab(id, btn);
+};
+
+// ─────────────────────────────────────────────────────────
+//  RECEIPT DOWNLOAD AS IMAGE (png)
+// ─────────────────────────────────────────────────────────
+async function downloadReceiptImage(){
+  if(!currentReceiptTx) return;
+  const receiptEl = document.getElementById('receipt-printable');
+  if(!receiptEl){ toast('Reçu introuvable','error'); return; }
+  // Use html2canvas loaded dynamically
+  if(!window.html2canvas){
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    document.head.appendChild(script);
+    await new Promise(res=>{ script.onload=res; script.onerror=()=>res(); });
+  }
+  if(!window.html2canvas){ toast('html2canvas non disponible','error'); return; }
+  toast('Génération image...','info');
+  try{
+    const canvas = await html2canvas(receiptEl, {
+      backgroundColor:'#ffffff',
+      scale:2,
+      useCORS:true,
+      logging:false
+    });
+    const link=document.createElement('a');
+    link.download='recu_'+currentReceiptTx.receiptNum+'.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    toast('📸 Reçu téléchargé en image','success');
+  }catch(e){
+    toast('Erreur génération image','error');
+    console.error(e);
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+//  DELETE ALL TRANSACTIONS (admin only)
+// ─────────────────────────────────────────────────────────
+async function deleteAllTransactions(){
+  if(!currentUser||currentUser.role!=='admin'){ toast('Accès refusé','error'); return; }
+  if(!confirm('⚠️ Supprimer TOUTES les transactions ? Cette action est irréversible.')) return;
+  if(!confirm('Confirmer la suppression totale de l’historique ?')) return;
+  toast('Suppression en cours...','info');
+  for(const tx of transactions){
+    await fbDelete('pos_transactions',tx.id);
+  }
+  transactions=[];
+  renderHistorique();
+  toast('🗑 Historique supprimé','success');
+}
+
+// ─────────────────────────────────────────────────────────
+//  ACHATS
+// ─────────────────────────────────────────────────────────
+let achats = [];
+
+function calcAchatTVA(){
+  const ht=parseFloat(document.getElementById('achat-ht').value)||0;
+  const rate=parseFloat(document.getElementById('achat-tva-rate').value)||20;
+  const tva=ht*rate/100;
+  const ttc=ht+tva;
+  document.getElementById('achat-ttc-display').textContent=fmtEur(ttc);
+}
+
+async function loadAchats(){
+  achats=await fbGetAll('pos_achats');
+  achats.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  renderAchats();
+  renderAchatStats();
+}
+
+async function saveAchat(){
+  const fournisseur=(document.getElementById('achat-fournisseur').value||'').trim();
+  const categorie=document.getElementById('achat-categorie').value;
+  const description=(document.getElementById('achat-description').value||'').trim();
+  const ht=parseFloat(document.getElementById('achat-ht').value)||0;
+  const tvaRate=parseFloat(document.getElementById('achat-tva-rate').value)||20;
+  const mode=document.getElementById('achat-mode').value;
+  const date=document.getElementById('achat-date').value;
+  const facture=(document.getElementById('achat-facture').value||'').trim();
+  const note=(document.getElementById('achat-note').value||'').trim();
+  const err=document.getElementById('achat-err');
+  err.style.display='none';
+  if(!fournisseur){err.textContent='Fournisseur requis.';err.style.display='block';return;}
+  if(!categorie){err.textContent='Catégorie requise.';err.style.display='block';return;}
+  if(ht<=0){err.textContent='Montant HT invalide.';err.style.display='block';return;}
+  if(!date){err.textContent='Date requise.';err.style.display='block';return;}
+  const tva=ht*tvaRate/100;
+  const ttc=ht+tva;
+  const achat={
+    id:genId(),fournisseur,categorie,description,
+    ht,tva,ttc,tvaRate,mode,
+    date:new Date(date).toISOString(),
+    facture,note,
+    saisie:new Date().toISOString(),
+    saisiePar:currentUser.username
+  };
+  await fbSave('pos_achats',achat.id,achat);
+  achats.unshift(achat);
+  renderAchats();
+  renderAchatStats();
+  // Reset form
+  ['achat-fournisseur','achat-description','achat-ht','achat-facture','achat-note'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('achat-categorie').value='';
+  document.getElementById('achat-mode').value='especes';
+  document.getElementById('achat-ttc-display').textContent='0,00 €';
+  toast('✅ Achat enregistré','success');
+}
+
+async function deleteAchat(id){
+  if(!confirm('Supprimer cet achat ?'))return;
+  await fbDelete('pos_achats',id);
+  achats=achats.filter(a=>a.id!==id);
+  renderAchats();
+  renderAchatStats();
+  toast('Achat supprimé','info');
+}
+
+const ACHAT_CAT_LABELS={
+  marchandises:'Marchandises',boissons:'Boissons',frais_generaux:'Frais généraux',
+  emballages:'Emballages',materiel:'Matériel',entretien:'Entretien',autre:'Autre'
+};
+const ACHAT_CAT_COLORS={
+  marchandises:'#0ea5e9',boissons:'#10b981',frais_generaux:'#f59e0b',
+  emballages:'#a855f7',materiel:'#f97316',entretien:'#06b6d4',autre:'#6b7280'
+};
+const ACHAT_MODE_LABELS={especes:'💵 Espèces',carte:'💳 Carte',cheque:'🧾 Chèque',virement:'🏦 Virement',credit:'⏳ Crédit'};
+
+function renderAchatStats(){
+  const totalHT=achats.reduce((s,a)=>s+a.ht,0);
+  const totalTVA=achats.reduce((s,a)=>s+a.tva,0);
+  const totalTTC=achats.reduce((s,a)=>s+a.ttc,0);
+  document.getElementById('achat-stat-count').textContent=achats.length;
+  document.getElementById('achat-stat-ht').textContent=fmtEur(totalHT);
+  document.getElementById('achat-stat-tva').textContent=fmtEur(totalTVA);
+  document.getElementById('achat-stat-ttc').textContent=fmtEur(totalTTC);
+}
+
+function renderAchats(){
+  const search=(document.getElementById('achat-search')?.value||'').toLowerCase();
+  const catFilter=document.getElementById('achat-cat-filter')?.value||'';
+  const monthFilter=document.getElementById('achat-month-filter')?.value||'';
+  let filtered=achats.filter(a=>{
+    if(search&&!a.fournisseur.toLowerCase().includes(search)&&!a.description.toLowerCase().includes(search))return false;
+    if(catFilter&&a.categorie!==catFilter)return false;
+    if(monthFilter){
+      const d=new Date(a.date);
+      const ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      if(ym!==monthFilter)return false;
+    }
+    return true;
+  });
+  const tbody=document.getElementById('achats-tbody');
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" class="hist-empty">Aucun achat trouvé</td></tr>';return;}
+  tbody.innerHTML=filtered.map(a=>{
+    const d=new Date(a.date);
+    const dateStr=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const col=ACHAT_CAT_COLORS[a.categorie]||'#6b7280';
+    const catLabel=ACHAT_CAT_LABELS[a.categorie]||a.categorie;
+    return `<tr>
+      <td style="font-size:12px;font-weight:600;">${dateStr}</td>
+      <td style="font-weight:700;">${a.fournisseur}</td>
+      <td><span class="achat-cat-badge" style="background:${col}22;color:${col};">${catLabel}</span></td>
+      <td style="font-size:12px;color:var(--muted2);">${a.description||'—'}</td>
+      <td style="font-family:'Syne',sans-serif;font-weight:700;">${fmtEur(a.ht)}</td>
+      <td style="color:var(--gold);font-size:12px;">${fmtEur(a.tva)}</td>
+      <td style="font-family:'Syne',sans-serif;font-weight:700;color:var(--accent);">${fmtEur(a.ttc)}</td>
+      <td style="font-size:11px;">${ACHAT_MODE_LABELS[a.mode]||a.mode}</td>
+      <td style="font-size:11px;color:var(--muted2);">${a.facture||'—'}</td>
+      <td><button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="deleteAchat('${a.id}')">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────
+//  COMPTABILITÉ
+// ─────────────────────────────────────────────────────────
+function getComptaPeriod(){
+  const period=document.getElementById('compta-period')?.value||'month';
+  const now=new Date();
+  let from,to;
+  to=new Date();
+  if(period==='month'){
+    from=new Date(now.getFullYear(),now.getMonth(),1);
+  } else if(period==='quarter'){
+    const q=Math.floor(now.getMonth()/3);
+    from=new Date(now.getFullYear(),q*3,1);
+  } else if(period==='year'){
+    from=new Date(now.getFullYear(),0,1);
+  } else {
+    from=new Date(2000,0,1);
+  }
+  return {from,to};
+}
+
+function renderCompta(){
+  const {from,to}=getComptaPeriod();
+  // Filter transactions
+  const txFiltered=transactions.filter(t=>{
+    const d=new Date(t.date);
+    return d>=from&&d<=to;
+  });
+  const achatsFiltered=achats.filter(a=>{
+    const d=new Date(a.date);
+    return d>=from&&d<=to;
+  });
+
+  const caHT=txFiltered.reduce((s,t)=>s+t.subtotal,0);
+  const caTVA=txFiltered.reduce((s,t)=>s+t.tva,0);
+  const caTTC=txFiltered.reduce((s,t)=>s+t.total,0);
+  const achatsHT=achatsFiltered.reduce((s,a)=>s+a.ht,0);
+  const achatsTVA=achatsFiltered.reduce((s,a)=>s+a.tva,0);
+  const achatsTTC=achatsFiltered.reduce((s,a)=>s+a.ttc,0);
+  const margeBrute=caHT-achatsHT;
+  const tvaNette=caTVA-achatsTVA;
+  const resultat=margeBrute;
+
+  // KPIs
+  document.getElementById('ck-ca').textContent=fmtEur(caTTC);
+  document.getElementById('ck-achats').textContent=fmtEur(achatsTTC);
+  document.getElementById('ck-marge').textContent=fmtEur(margeBrute);
+  const margeEl=document.getElementById('ck-marge');
+  margeEl.style.color=margeBrute>=0?'var(--green2)':'var(--red2)';
+  document.getElementById('ck-tva-c').textContent=fmtEur(caTVA);
+  document.getElementById('ck-tva-d').textContent=fmtEur(achatsTVA);
+  document.getElementById('ck-tva-net').textContent=fmtEur(tvaNette);
+  document.getElementById('ck-result').textContent=fmtEur(resultat);
+  document.getElementById('ck-result').style.color=resultat>=0?'var(--green2)':'var(--red2)';
+  document.getElementById('ck-tx').textContent=txFiltered.length;
+
+  // Bilan
+  // ACTIF
+  const especes=txFiltered.filter(t=>t.mode==='especes').reduce((s,t)=>s+t.total,0);
+  const banque=txFiltered.filter(t=>t.mode==='carte').reduce((s,t)=>s+t.total,0);
+  const actifRows=[
+    {compte:'53',label:'Caisse (espèces)',val:especes},
+    {compte:'51',label:'Banque (carte)',val:banque},
+    {compte:'37',label:'Stock marchandises (estimé)',val:achatsHT*0.3},
+    {compte:'44566',label:'TVA déductible',val:achatsTVA},
+  ];
+  document.getElementById('bilan-actif').innerHTML=actifRows.map(r=>`
+    <div class="bilan-row">
+      <span><span class="bilan-compte">${r.compte}</span>${r.label}</span>
+      <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--green2);">${fmtEur(r.val)}</span>
+    </div>`).join('');
+  const totalActif=actifRows.reduce((s,r)=>s+r.val,0);
+  document.getElementById('bilan-total-actif').textContent=fmtEur(totalActif);
+
+  // PASSIF
+  const passifRows=[
+    {compte:'44571',label:'TVA collectée',val:caTVA},
+    {compte:'401',label:'Dettes fournisseurs',val:achatsFiltered.filter(a=>a.mode==='credit').reduce((s,a)=>s+a.ttc,0)},
+    {compte:'10',label:'Capital / Résultat',val:margeBrute},
+  ];
+  document.getElementById('bilan-passif').innerHTML=passifRows.map(r=>`
+    <div class="bilan-row">
+      <span><span class="bilan-compte">${r.compte}</span>${r.label}</span>
+      <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--red2);">${fmtEur(r.val)}</span>
+    </div>`).join('');
+  const totalPassif=passifRows.reduce((s,r)=>s+r.val,0);
+  document.getElementById('bilan-total-passif').textContent=fmtEur(totalPassif);
+
+  // Modes encaissement
+  const modesData=[
+    {label:'Espèces',val:especes,color:'var(--green2)'},
+    {label:'Carte',val:banque,color:'var(--accent2)'},
+  ];
+  const maxMode=Math.max(...modesData.map(m=>m.val),1);
+  document.getElementById('compta-modes').innerHTML=modesData.map(m=>`
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;">
+        <span style="font-weight:600;">${m.label}</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;color:${m.color};">${fmtEur(m.val)}</span>
+      </div>
+      <div style="height:8px;border-radius:99px;background:var(--surface3);">
+        <div style="height:100%;border-radius:99px;background:${m.color};width:${(m.val/maxMode*100).toFixed(1)}%;transition:width .5s;"></div>
+      </div>
+    </div>`).join('');
+
+  // Achats par catégorie
+  const catTotals={};
+  achatsFiltered.forEach(a=>{ catTotals[a.categorie]=(catTotals[a.categorie]||0)+a.ht; });
+  const maxCat=Math.max(...Object.values(catTotals),1);
+  document.getElementById('compta-achat-cats').innerHTML=Object.entries(catTotals).map(([cat,val])=>{
+    const col=ACHAT_CAT_COLORS[cat]||'#6b7280';
+    const lbl=ACHAT_CAT_LABELS[cat]||cat;
+    return `<div style="display:flex;flex-direction:column;gap:3px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;">
+        <span style="font-weight:600;">${lbl}</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;color:${col};">${fmtEur(val)}</span>
+      </div>
+      <div style="height:6px;border-radius:99px;background:var(--surface3);">
+        <div style="height:100%;border-radius:99px;background:${col};width:${(val/maxCat*100).toFixed(1)}%;"></div>
+      </div>
+    </div>`;
+  }).join('')||'<div style="font-size:12px;color:var(--muted);">Aucun achat sur la période</div>';
+
+  renderGrandLivre(txFiltered, achatsFiltered);
+}
+
+function renderGrandLivre(txFiltered, achatsFiltered){
+  if(!txFiltered||!achatsFiltered){
+    const {from,to}=getComptaPeriod();
+    txFiltered=transactions.filter(t=>{const d=new Date(t.date);return d>=from&&d<=to;});
+    achatsFiltered=achats.filter(a=>{const d=new Date(a.date);return d>=from&&d<=to;});
+  }
+  const compteFilter=document.getElementById('gl-compte-filter')?.value||'';
+
+  // Build journal entries
+  const entries=[];
+  txFiltered.forEach(t=>{
+    const d=new Date(t.date);
+    const compteEnc=t.mode==='especes'?'53':'51';
+    const encLabel=t.mode==='especes'?'Caisse':'Banque';
+    if(!compteFilter||compteFilter===compteEnc||compteFilter==='70'||compteFilter==='44571'){
+      if(!compteFilter||compteFilter===compteEnc)
+        entries.push({date:d,compte:compteEnc,label:encLabel+' — Vente '+t.receiptNum,ref:t.receiptNum,debit:t.total,credit:0});
+      if(!compteFilter||compteFilter==='70')
+        entries.push({date:d,compte:'707',label:'Ventes de marchandises — '+t.receiptNum,ref:t.receiptNum,debit:0,credit:t.subtotal});
+      if(!compteFilter||compteFilter==='44571')
+        entries.push({date:d,compte:'44571',label:'TVA collectée 20% — '+t.receiptNum,ref:t.receiptNum,debit:0,credit:t.tva});
+    }
+  });
+  achatsFiltered.forEach(a=>{
+    const d=new Date(a.date);
+    if(!compteFilter||compteFilter==='60'||compteFilter==='44566'){
+      if(!compteFilter||compteFilter==='60')
+        entries.push({date:d,compte:'607',label:'Achats — '+a.fournisseur+(a.description?' ('+a.description+')':''),ref:a.facture||'—',debit:a.ht,credit:0});
+      if(!compteFilter||compteFilter==='44566')
+        entries.push({date:d,compte:'44566',label:'TVA déductible — '+a.fournisseur,ref:a.facture||'—',debit:a.tva,credit:0});
+      if(!compteFilter||compteFilter==='51'||compteFilter==='53'){
+        const compteSort=a.mode==='especes'?'53':'51';
+        if(!compteFilter||compteFilter===compteSort)
+          entries.push({date:d,compte:compteSort,label:'Règlement achat — '+a.fournisseur,ref:a.facture||'—',debit:0,credit:a.ttc});
+      }
+    }
+  });
+
+  entries.sort((a,b)=>a.date-b.date);
+
+  // Calculate running balance
+  let solde=0;
+  const tbody=document.getElementById('gl-tbody');
+  if(!entries.length){tbody.innerHTML='<tr><td colspan="7" class="hist-empty">Aucune écriture sur la période</td></tr>';return;}
+  tbody.innerHTML=entries.map(e=>{
+    solde+=e.debit-e.credit;
+    const dateStr=e.date.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+    return `<tr>
+      <td style="font-size:12px;">${dateStr}</td>
+      <td><span style="font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--accent2);">${e.compte}</span></td>
+      <td style="font-size:12px;">${e.label}</td>
+      <td style="font-size:11px;color:var(--muted2);">${e.ref}</td>
+      <td style="text-align:right;" class="gl-debit">${e.debit>0?fmtEur(e.debit):'—'}</td>
+      <td style="text-align:right;" class="gl-credit">${e.credit>0?fmtEur(e.credit):'—'}</td>
+      <td style="text-align:right;" class="gl-solde" style="color:${solde>=0?'var(--green2)':'var(--red2)'};">${fmtEur(solde)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportComptaCSV(){
+  const {from,to}=getComptaPeriod();
+  const txF=transactions.filter(t=>{const d=new Date(t.date);return d>=from&&d<=to;});
+  const achF=achats.filter(a=>{const d=new Date(a.date);return d>=from&&d<=to;});
+  const rows=[['Date','N° Compte','Libellé','Référence','Débit','Crédit']];
+  txF.forEach(t=>{
+    const d=new Date(t.date).toLocaleDateString('fr-FR');
+    const c=t.mode==='especes'?'53':'51';
+    rows.push([d,c,'Encaissement — '+t.receiptNum,t.receiptNum,t.total.toFixed(2),'']);
+    rows.push([d,'707','Ventes — '+t.receiptNum,t.receiptNum,'',t.subtotal.toFixed(2)]);
+    rows.push([d,'44571','TVA collectée — '+t.receiptNum,t.receiptNum,'',t.tva.toFixed(2)]);
+  });
+  achF.forEach(a=>{
+    const d=new Date(a.date).toLocaleDateString('fr-FR');
+    rows.push([d,'607','Achats — '+a.fournisseur,a.facture||'',a.ht.toFixed(2),'']);
+    rows.push([d,'44566','TVA déductible — '+a.fournisseur,a.facture||'',a.tva.toFixed(2),'']);
+  });
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='grand_livre_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  URL.revokeObjectURL(url);
+  toast('📊 Grand Livre exporté','success');
+}
+
 // ─────────────────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', ()=>{
+  // Set today date for achat form
+  const todayVal=new Date().toISOString().slice(0,10);
+  const achatDateEl=document.getElementById('achat-date');
+  if(achatDateEl) achatDateEl.value=todayVal;
+  initTheme();
   document.getElementById('loading-screen').style.display='flex';
   document.getElementById('login-page').style.display='none';
   document.addEventListener('firebase-ready', tryAutoLogin, {once:true});
