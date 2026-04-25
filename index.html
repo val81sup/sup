@@ -617,7 +617,7 @@ body.light-mode .receipt-btn{background:var(--surface2);border-color:var(--borde
           <option value="carte">Carte</option>
         </select>
         <button class="btn btn-outline" onclick="resetHistFilters()">↺ Réinitialiser</button>
-        <button class="btn btn-primary" onclick="exportCSV()">📊 Exporter CSV</button>
+        <button class="btn btn-primary" onclick="exportCSV()">📄 Exporter PDF</button>
         <button class="btn btn-danger" id="btn-delete-all-hist" onclick="deleteAllTransactions()" style="display:none;">🗑 Tout supprimer</button>
       </div>
       <!-- Table -->
@@ -771,194 +771,259 @@ body.light-mode .receipt-btn{background:var(--surface2);border-color:var(--borde
         <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Achats</div>
         <div style="font-size:13px;color:var(--muted);margin-top:3px;">Enregistrement des achats fournisseurs</div>
       </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" onclick="exportAchatsPDF()">📄 Exporter PDF</button>
+      </div>
     </div>
     <div class="achats-layout" style="padding:0 28px 28px;">
       <!-- Formulaire -->
       <div class="card" style="height:fit-content;position:sticky;top:calc(var(--topbar-h)+var(--tabbar-h)+20px);">
         <div class="card-title">➕ Nouvel achat</div>
-        <div class="field"><label>Fournisseur *</label><input type="text" id="achat-fournisseur" placeholder="Ex: Metro, Promocash..."></div>
-        <div class="field"><label>Catégorie *</label>
-          <select id="achat-categorie">
+        <div class="field">
+          <label>Catégorie *</label>
+          <select id="achat-categorie" onchange="filterAchatArticles()">
             <option value="">— Choisir —</option>
-            <option value="marchandises">Marchandises</option>
-            <option value="boissons">Boissons</option>
-            <option value="frais_generaux">Frais généraux</option>
-            <option value="emballages">Emballages</option>
-            <option value="materiel">Matériel</option>
-            <option value="entretien">Entretien</option>
-            <option value="autre">Autre</option>
+            <option value="marchandises">🛒 Marchandises</option>
+            <option value="boissons">🥤 Boissons</option>
+            <option value="frais">🧊 Produits frais</option>
+            <option value="epicerie">🫙 Épicerie sèche</option>
+            <option value="hygiene">🧴 Hygiène/Entretien</option>
+            <option value="emballages">📦 Emballages</option>
+            <option value="materiel">🔧 Matériel</option>
+            <option value="frais_generaux">📋 Frais généraux</option>
+            <option value="autre">📌 Autre</option>
           </select>
         </div>
-        <div class="field"><label>Description</label><input type="text" id="achat-description" placeholder="Description de l'achat"></div>
+        <div class="field">
+          <label>Article *</label>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="achat-article" placeholder="Nom de l'article" style="flex:1;">
+          </div>
+        </div>
+        <div class="field">
+          <label>Fournisseur</label>
+          <input type="text" id="achat-fournisseur" placeholder="Ex: Metro, Promocash, Lidl...">
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div class="field"><label>Montant HT (€) *</label><input type="number" id="achat-ht" placeholder="0.00" min="0" step="0.01" oninput="calcAchatTVA()"></div>
-          <div class="field"><label>TVA (%)</label>
-            <select id="achat-tva-rate" onchange="calcAchatTVA()">
+          <div class="field">
+            <label>Quantité *</label>
+            <input type="number" id="achat-qty" placeholder="1" min="1" step="1" value="1" oninput="calcAchatTotal()">
+          </div>
+          <div class="field">
+            <label>Unité</label>
+            <select id="achat-unite">
+              <option value="unité">Unité(s)</option>
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="L">L</option>
+              <option value="carton">Carton(s)</option>
+              <option value="palette">Palette(s)</option>
+              <option value="lot">Lot(s)</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="field">
+            <label>Prix unitaire HT (€) *</label>
+            <input type="number" id="achat-prix-ht" placeholder="0.00" min="0" step="0.01" oninput="calcAchatTotal()">
+          </div>
+          <div class="field">
+            <label>TVA</label>
+            <select id="achat-tva-rate" onchange="calcAchatTotal()">
               <option value="20">20%</option>
               <option value="10">10%</option>
               <option value="5.5">5,5%</option>
+              <option value="2.1">2,1%</option>
               <option value="0">0%</option>
             </select>
           </div>
         </div>
-        <div class="field"><label>TTC calculé</label>
-          <div style="background:var(--surface3);border:1px solid var(--border2);border-radius:9px;padding:10px 13px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--accent);" id="achat-ttc-display">0,00 €</div>
+        <!-- Totaux calculés -->
+        <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:12px 14px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+          <div><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:3px;">Total HT</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;" id="achat-total-ht-display">0,00 €</div></div>
+          <div><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:3px;">TVA</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:var(--gold);" id="achat-tva-display">0,00 €</div></div>
+          <div><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:3px;">Total TTC</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--accent);" id="achat-total-ttc-display">0,00 €</div></div>
         </div>
-        <div class="field"><label>Mode de paiement</label>
-          <select id="achat-mode">
-            <option value="especes">💵 Espèces</option>
-            <option value="carte">💳 Carte bancaire</option>
-            <option value="cheque">🧾 Chèque</option>
-            <option value="virement">🏦 Virement</option>
-            <option value="credit">⏳ Crédit fournisseur</option>
-          </select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="field">
+            <label>Mode de paiement</label>
+            <select id="achat-mode">
+              <option value="especes">💵 Espèces</option>
+              <option value="carte">💳 Carte</option>
+              <option value="cheque">🧾 Chèque</option>
+              <option value="virement">🏦 Virement</option>
+              <option value="credit">⏳ Crédit fournisseur</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Date *</label>
+            <input type="date" id="achat-date">
+          </div>
         </div>
-        <div class="field"><label>Date *</label><input type="date" id="achat-date"></div>
-        <div class="field"><label>N° Facture (optionnel)</label><input type="text" id="achat-facture" placeholder="FAC-2024-001"></div>
-        <div class="field"><label>Note</label><textarea id="achat-note" rows="2" placeholder="Remarques..."></textarea></div>
-        <button class="btn btn-primary" style="width:100%;padding:12px;" onclick="saveAchat()">💾 Enregistrer l'achat</button>
+        <div class="field">
+          <label>N° Facture / Bon de commande</label>
+          <input type="text" id="achat-facture" placeholder="FAC-2024-001">
+        </div>
+        <div class="field">
+          <label>Note</label>
+          <textarea id="achat-note" rows="2" placeholder="Remarques..."></textarea>
+        </div>
+        <button class="btn btn-success" style="width:100%;padding:12px;" onclick="saveAchat()">💾 Enregistrer l'achat</button>
         <div id="achat-err" style="display:none;margin-top:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--red2);"></div>
       </div>
-      <!-- Liste achats -->
-      <div>
-        <!-- Stats achats -->
-        <div class="stats-strip" style="margin-bottom:18px;">
+      <!-- Tableau achats -->
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
           <div class="stat-card"><div class="s-label">Total achats</div><div class="s-value" id="achat-stat-count">0</div><div class="s-sub">enregistrés</div></div>
-          <div class="stat-card"><div class="s-label">Dépenses HT</div><div class="s-value" id="achat-stat-ht" style="color:var(--red2)">0,00 €</div><div class="s-sub">total</div></div>
+          <div class="stat-card"><div class="s-label">Montant HT</div><div class="s-value" id="achat-stat-ht" style="color:var(--red2)">0,00 €</div><div class="s-sub">total</div></div>
           <div class="stat-card"><div class="s-label">TVA déductible</div><div class="s-value" id="achat-stat-tva" style="color:var(--gold)">0,00 €</div><div class="s-sub">total</div></div>
-          <div class="stat-card"><div class="s-label">Dépenses TTC</div><div class="s-value" id="achat-stat-ttc" style="color:var(--accent)">0,00 €</div><div class="s-sub">total</div></div>
+          <div class="stat-card"><div class="s-label">Montant TTC</div><div class="s-value" id="achat-stat-ttc" style="color:var(--accent)">0,00 €</div><div class="s-sub">total</div></div>
         </div>
-        <!-- Filtre -->
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
-          <input type="text" id="achat-search" placeholder="🔍 Fournisseur, description..." oninput="renderAchats()" style="width:220px;">
+        <!-- Filtres -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="achat-search" placeholder="🔍 Rechercher..." oninput="renderAchats()" style="width:200px;">
           <select id="achat-cat-filter" onchange="renderAchats()" style="width:160px;">
             <option value="">Toutes catégories</option>
             <option value="marchandises">Marchandises</option>
             <option value="boissons">Boissons</option>
-            <option value="frais_generaux">Frais généraux</option>
+            <option value="frais">Produits frais</option>
+            <option value="epicerie">Épicerie sèche</option>
+            <option value="hygiene">Hygiène/Entretien</option>
             <option value="emballages">Emballages</option>
             <option value="materiel">Matériel</option>
-            <option value="entretien">Entretien</option>
+            <option value="frais_generaux">Frais généraux</option>
             <option value="autre">Autre</option>
           </select>
           <input type="month" id="achat-month-filter" onchange="renderAchats()">
+          <button class="btn btn-outline" onclick="resetAchatFilters()">↺ Réinitialiser</button>
         </div>
-        <!-- Table achats -->
-        <div class="hist-table-wrap">
-          <table class="hist-table">
+        <!-- Table -->
+        <div class="hist-table-wrap" id="achats-table-container">
+          <table class="hist-table" id="achats-table">
             <thead><tr>
-              <th>Date</th><th>Fournisseur</th><th>Catégorie</th><th>Description</th>
-              <th>HT</th><th>TVA</th><th>TTC</th><th>Mode</th><th>Facture</th><th>Actions</th>
+              <th>Date</th>
+              <th>Catégorie</th>
+              <th>Article</th>
+              <th>Fournisseur</th>
+              <th style="text-align:right;">Qté</th>
+              <th>Unité</th>
+              <th style="text-align:right;">Prix unit. HT</th>
+              <th style="text-align:right;">Total HT</th>
+              <th style="text-align:right;">TVA</th>
+              <th style="text-align:right;">Total TTC</th>
+              <th>Mode</th>
+              <th>Facture</th>
+              <th>Actions</th>
             </tr></thead>
-            <tbody id="achats-tbody"><tr><td colspan="10" class="hist-empty">Aucun achat enregistré</td></tr></tbody>
+            <tbody id="achats-tbody"><tr><td colspan="13" class="hist-empty">Aucun achat enregistré</td></tr></tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════
-       TAB COMPTABILITÉ
-  ══════════════════════════════════════════════════ -->
   <div class="tab-content" id="tab-compta">
     <div style="padding:22px 28px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
       <div>
         <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Comptabilité</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:3px;">Bilan et Grand Livre — Supérette française</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px;">Bilan &amp; Grand Livre — Supérette française (PCG)</div>
       </div>
-      <div style="display:flex;gap:10px;align-items:center;">
-        <select id="compta-period" onchange="renderCompta()" style="width:160px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="compta-period" onchange="renderCompta()" style="width:150px;">
           <option value="month">Ce mois</option>
           <option value="quarter">Ce trimestre</option>
           <option value="year">Cette année</option>
           <option value="all">Tout</option>
         </select>
         <button class="btn btn-primary" onclick="renderCompta()">🔄 Actualiser</button>
-        <button class="btn btn-outline" onclick="exportComptaCSV()">📊 Exporter</button>
+        <button class="btn btn-outline" onclick="exportComptaPDF()">📄 Exporter PDF</button>
       </div>
     </div>
-    <div style="padding:0 28px 28px;display:flex;flex-direction:column;gap:22px;">
+    <div style="padding:0 28px 28px;display:flex;flex-direction:column;gap:22px;" id="compta-content">
 
       <!-- KPIs -->
-      <div class="stats-strip" id="compta-kpis">
-        <div class="stat-card"><div class="s-label">Chiffre d'affaires TTC</div><div class="s-value" id="ck-ca" style="color:var(--green2)">0,00 €</div><div class="s-sub">ventes</div></div>
-        <div class="stat-card"><div class="s-label">Achats TTC</div><div class="s-value" id="ck-achats" style="color:var(--red2)">0,00 €</div><div class="s-sub">dépenses</div></div>
-        <div class="stat-card"><div class="s-label">Marge brute</div><div class="s-value" id="ck-marge" style="color:var(--accent)">0,00 €</div><div class="s-sub">CA - Achats HT</div></div>
-        <div class="stat-card"><div class="s-label">TVA collectée</div><div class="s-value" id="ck-tva-c" style="color:var(--gold)">0,00 €</div><div class="s-sub">à reverser</div></div>
-        <div class="stat-card"><div class="s-label">TVA déductible</div><div class="s-value" id="ck-tva-d" style="color:var(--gold2)">0,00 €</div><div class="s-sub">sur achats</div></div>
-        <div class="stat-card"><div class="s-label">TVA nette due</div><div class="s-value" id="ck-tva-net" style="color:var(--red2)">0,00 €</div><div class="s-sub">à payer</div></div>
-        <div class="stat-card"><div class="s-label">Résultat net</div><div class="s-value" id="ck-result" style="color:var(--green2)">0,00 €</div><div class="s-sub">estimé</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+        <div class="stat-card"><div class="s-label">CA TTC (ventes)</div><div class="s-value" id="ck-ca" style="color:var(--green2)">0,00 €</div><div class="s-sub">compte 707</div></div>
+        <div class="stat-card"><div class="s-label">Achats TTC</div><div class="s-value" id="ck-achats" style="color:var(--red2)">0,00 €</div><div class="s-sub">compte 607</div></div>
+        <div class="stat-card"><div class="s-label">Marge brute</div><div class="s-value" id="ck-marge">0,00 €</div><div class="s-sub">CA HT − Achats HT</div></div>
+        <div class="stat-card"><div class="s-label">Résultat net</div><div class="s-value" id="ck-result">0,00 €</div><div class="s-sub">estimé</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+        <div class="stat-card"><div class="s-label">TVA collectée</div><div class="s-value" id="ck-tva-c" style="color:var(--gold)">0,00 €</div><div class="s-sub">cpt 44571</div></div>
+        <div class="stat-card"><div class="s-label">TVA déductible</div><div class="s-value" id="ck-tva-d" style="color:var(--gold2)">0,00 €</div><div class="s-sub">cpt 44566</div></div>
+        <div class="stat-card"><div class="s-label">TVA nette due</div><div class="s-value" id="ck-tva-net" style="color:var(--red2)">0,00 €</div><div class="s-sub">à déclarer</div></div>
         <div class="stat-card"><div class="s-label">Transactions</div><div class="s-value" id="ck-tx">0</div><div class="s-sub">ventes</div></div>
       </div>
 
-      <!-- Bilan et Grand Livre en 2 colonnes -->
+      <!-- Bilan -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;">
-
-        <!-- BILAN -->
-        <div class="card">
+        <div class="card" id="bilan-card">
           <div class="card-title">📊 Bilan simplifié</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <!-- ACTIF -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
             <div>
-              <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--green2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px;">ACTIF</div>
-              <div id="bilan-actif" style="display:flex;flex-direction:column;gap:6px;"></div>
-              <div style="border-top:2px solid var(--border2);margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;font-family:'Syne',sans-serif;font-weight:800;">
-                <span style="font-size:12px;">Total Actif</span>
-                <span style="color:var(--green2);" id="bilan-total-actif">0,00 €</span>
+              <div style="font-size:11px;font-weight:800;color:var(--green2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px;padding-bottom:6px;border-bottom:1px solid var(--border2);">ACTIF</div>
+              <div id="bilan-actif" style="display:flex;flex-direction:column;gap:5px;"></div>
+              <div style="border-top:2px solid var(--border2);margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;">
+                <span>Total Actif</span><span style="color:var(--green2);" id="bilan-total-actif">0,00 €</span>
               </div>
             </div>
-            <!-- PASSIF -->
             <div>
-              <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--red2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px;">PASSIF</div>
-              <div id="bilan-passif" style="display:flex;flex-direction:column;gap:6px;"></div>
-              <div style="border-top:2px solid var(--border2);margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;font-family:'Syne',sans-serif;font-weight:800;">
-                <span style="font-size:12px;">Total Passif</span>
-                <span style="color:var(--red2);" id="bilan-total-passif">0,00 €</span>
+              <div style="font-size:11px;font-weight:800;color:var(--red2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px;padding-bottom:6px;border-bottom:1px solid var(--border2);">PASSIF</div>
+              <div id="bilan-passif" style="display:flex;flex-direction:column;gap:5px;"></div>
+              <div style="border-top:2px solid var(--border2);margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;">
+                <span>Total Passif</span><span style="color:var(--red2);" id="bilan-total-passif">0,00 €</span>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- RÉPARTITION PAR MODE -->
+        <!-- Répartition -->
         <div class="card">
-          <div class="card-title">💳 Répartition encaissements</div>
-          <div id="compta-modes" style="display:flex;flex-direction:column;gap:8px;"></div>
-          <div style="margin-top:18px;">
-            <div class="card-title">🛍 Achats par catégorie</div>
-            <div id="compta-achat-cats" style="display:flex;flex-direction:column;gap:6px;"></div>
-          </div>
+          <div class="card-title">📈 Répartition des encaissements</div>
+          <div id="compta-modes" style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;"></div>
+          <div class="card-title">🛍 Achats par catégorie</div>
+          <div id="compta-achat-cats" style="display:flex;flex-direction:column;gap:7px;"></div>
         </div>
       </div>
 
-      <!-- GRAND LIVRE -->
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <!-- Grand Livre -->
+      <div class="card" id="grand-livre-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
           <div class="card-title" style="margin-bottom:0;">📖 Grand Livre</div>
           <div style="display:flex;gap:8px;">
-            <select id="gl-compte-filter" onchange="renderGrandLivre()" style="width:200px;font-size:12px;">
+            <select id="gl-compte-filter" onchange="renderGrandLivre()" style="width:230px;font-size:12px;">
               <option value="">Tous les comptes</option>
-              <option value="70">70 — Ventes de marchandises</option>
-              <option value="60">60 — Achats de marchandises</option>
               <option value="53">53 — Caisse (espèces)</option>
-              <option value="51">51 — Banque (carte)</option>
+              <option value="51">51 — Banque (carte/virement)</option>
+              <option value="707">707 — Ventes de marchandises</option>
+              <option value="607">607 — Achats de marchandises</option>
               <option value="44571">44571 — TVA collectée</option>
               <option value="44566">44566 — TVA déductible</option>
+              <option value="401">401 — Fournisseurs</option>
             </select>
           </div>
         </div>
         <div style="overflow-x:auto;">
-          <table class="hist-table" style="min-width:750px;">
+          <table class="hist-table" id="gl-table" style="min-width:800px;">
             <thead><tr>
-              <th>Date</th><th>N° Compte</th><th>Libellé</th><th>Réf. pièce</th>
-              <th style="text-align:right;">Débit</th><th style="text-align:right;">Crédit</th><th style="text-align:right;">Solde</th>
+              <th>Date</th>
+              <th>N° Cpte</th>
+              <th>Intitulé compte</th>
+              <th>Libellé écriture</th>
+              <th>Réf. pièce</th>
+              <th style="text-align:right;">Débit (€)</th>
+              <th style="text-align:right;">Crédit (€)</th>
+              <th style="text-align:right;">Solde (€)</th>
             </tr></thead>
-            <tbody id="gl-tbody"><tr><td colspan="7" class="hist-empty">Sélectionnez une période</td></tr></tbody>
+            <tbody id="gl-tbody"><tr><td colspan="8" class="hist-empty">Actualisez pour afficher le grand livre</td></tr></tbody>
           </table>
         </div>
       </div>
 
     </div>
   </div>
+
+
 
 
 <!-- Auto-logout warning -->
@@ -1575,31 +1640,7 @@ function resetHistFilters(){
   filterHistorique();
 }
 
-function exportCSV(){
-  if(!transactions.length){toast('Aucune transaction à exporter','error');return;}
-  const rows=[['N° Reçu','Date','Heure','Articles','Mode','Total','Reçu','Rendu','Caissier','Note']];
-  transactions.forEach(t=>{
-    const d=new Date(t.date);
-    rows.push([
-      t.receiptNum,
-      d.toLocaleDateString('fr-FR'),
-      d.toLocaleTimeString('fr-FR'),
-      t.items.map(i=>`${i.name}×${i.qty}`).join(' | '),
-      t.mode,
-      t.total.toFixed(2),
-      t.montantRecu.toFixed(2),
-      t.rendu.toFixed(2),
-      t.caissier,
-      t.note||''
-    ]);
-  });
-  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=`transactions_${new Date().toISOString().slice(0,10)}.csv`;a.click();
-  URL.revokeObjectURL(url);
-  toast('📊 Export CSV téléchargé','success');
-}
+
 
 // ─────────────────────────────────────────────────────────
 //  REÇU
@@ -1937,28 +1978,77 @@ async function deleteAllTransactions(){
 // ─────────────────────────────────────────────────────────
 //  ACHATS
 // ─────────────────────────────────────────────────────────
-let achats = [];
 
-function calcAchatTVA(){
-  const ht=parseFloat(document.getElementById('achat-ht').value)||0;
-  const rate=parseFloat(document.getElementById('achat-tva-rate').value)||20;
-  const tva=ht*rate/100;
-  const ttc=ht+tva;
-  document.getElementById('achat-ttc-display').textContent=fmtEur(ttc);
+// ─────────────────────────────────────────────────────────
+//  COMPTABILITÉ
+// ─────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────
+//  CONSTANTES ACHATS
+// ─────────────────────────────────────────────────────────
+const ACHAT_CAT_LABELS={
+  marchandises:'Marchandises',boissons:'Boissons',frais:'Produits frais',
+  epicerie:'Épicerie sèche',hygiene:'Hygiène/Entretien',
+  emballages:'Emballages',materiel:'Matériel',
+  frais_generaux:'Frais généraux',autre:'Autre'
+};
+const ACHAT_CAT_COLORS={
+  marchandises:'#0ea5e9',boissons:'#10b981',frais:'#06b6d4',
+  epicerie:'#a855f7',hygiene:'#f97316',
+  emballages:'#f59e0b',materiel:'#ef4444',
+  frais_generaux:'#6b7280',autre:'#8b5cf6'
+};
+const ACHAT_CAT_COMPTES={
+  marchandises:'607',boissons:'607',frais:'607',
+  epicerie:'607',hygiene:'607',emballages:'606',
+  materiel:'2154',frais_generaux:'627',autre:'607'
+};
+const ACHAT_MODE_LABELS={
+  especes:'💵 Espèces',carte:'💳 Carte',
+  cheque:'🧾 Chèque',virement:'🏦 Virement',credit:'⏳ Crédit'
+};
+let achats=[];
+
+// ─────────────────────────────────────────────────────────
+//  ACHATS — CALCUL TEMPS RÉEL
+// ─────────────────────────────────────────────────────────
+function calcAchatTotal(){
+  const qty=parseFloat(document.getElementById('achat-qty')?.value)||0;
+  const pu=parseFloat(document.getElementById('achat-prix-ht')?.value)||0;
+  const rate=parseFloat(document.getElementById('achat-tva-rate')?.value)||20;
+  const totalHT=qty*pu;
+  const totalTVA=totalHT*rate/100;
+  const totalTTC=totalHT+totalTVA;
+  const el1=document.getElementById('achat-total-ht-display');
+  const el2=document.getElementById('achat-tva-display');
+  const el3=document.getElementById('achat-total-ttc-display');
+  if(el1) el1.textContent=fmtEur(totalHT);
+  if(el2) el2.textContent=fmtEur(totalTVA);
+  if(el3) el3.textContent=fmtEur(totalTTC);
 }
 
+// ─────────────────────────────────────────────────────────
+//  ACHATS — LOAD
+// ─────────────────────────────────────────────────────────
 async function loadAchats(){
-  achats=await fbGetAll('pos_achats');
-  achats.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  try{
+    achats=await fbGetAll('pos_achats');
+    achats.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  }catch(e){ achats=[]; }
   renderAchats();
   renderAchatStats();
 }
 
+// ─────────────────────────────────────────────────────────
+//  ACHATS — SAVE
+// ─────────────────────────────────────────────────────────
 async function saveAchat(){
-  const fournisseur=(document.getElementById('achat-fournisseur').value||'').trim();
   const categorie=document.getElementById('achat-categorie').value;
-  const description=(document.getElementById('achat-description').value||'').trim();
-  const ht=parseFloat(document.getElementById('achat-ht').value)||0;
+  const article=(document.getElementById('achat-article').value||'').trim();
+  const fournisseur=(document.getElementById('achat-fournisseur').value||'').trim();
+  const qty=parseFloat(document.getElementById('achat-qty').value)||0;
+  const unite=document.getElementById('achat-unite').value||'unité';
+  const prixHT=parseFloat(document.getElementById('achat-prix-ht').value)||0;
   const tvaRate=parseFloat(document.getElementById('achat-tva-rate').value)||20;
   const mode=document.getElementById('achat-mode').value;
   const date=document.getElementById('achat-date').value;
@@ -1966,16 +2056,18 @@ async function saveAchat(){
   const note=(document.getElementById('achat-note').value||'').trim();
   const err=document.getElementById('achat-err');
   err.style.display='none';
-  if(!fournisseur){err.textContent='Fournisseur requis.';err.style.display='block';return;}
   if(!categorie){err.textContent='Catégorie requise.';err.style.display='block';return;}
-  if(ht<=0){err.textContent='Montant HT invalide.';err.style.display='block';return;}
+  if(!article){err.textContent='Article requis.';err.style.display='block';return;}
+  if(qty<=0){err.textContent='Quantité invalide.';err.style.display='block';return;}
+  if(prixHT<0){err.textContent='Prix HT invalide.';err.style.display='block';return;}
   if(!date){err.textContent='Date requise.';err.style.display='block';return;}
-  const tva=ht*tvaRate/100;
-  const ttc=ht+tva;
+  const totalHT=qty*prixHT;
+  const tva=totalHT*tvaRate/100;
+  const ttc=totalHT+tva;
   const achat={
-    id:genId(),fournisseur,categorie,description,
-    ht,tva,ttc,tvaRate,mode,
-    date:new Date(date).toISOString(),
+    id:genId(),categorie,article,fournisseur,
+    qty,unite,prixHT,totalHT,tva,ttc,tvaRate,mode,
+    date:new Date(date+'T12:00:00').toISOString(),
     facture,note,
     saisie:new Date().toISOString(),
     saisiePar:currentUser.username
@@ -1984,16 +2076,23 @@ async function saveAchat(){
   achats.unshift(achat);
   renderAchats();
   renderAchatStats();
-  // Reset form
-  ['achat-fournisseur','achat-description','achat-ht','achat-facture','achat-note'].forEach(id=>{document.getElementById(id).value='';});
-  document.getElementById('achat-categorie').value='';
+  ['achat-categorie','achat-article','achat-fournisseur','achat-facture','achat-note'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='';
+  });
+  document.getElementById('achat-qty').value='1';
+  document.getElementById('achat-prix-ht').value='';
+  document.getElementById('achat-unite').value='unité';
   document.getElementById('achat-mode').value='especes';
-  document.getElementById('achat-ttc-display').textContent='0,00 €';
-  toast('✅ Achat enregistré','success');
+  calcAchatTotal();
+  toast('Achat enregistré','success');
 }
 
+// ─────────────────────────────────────────────────────────
+//  ACHATS — DELETE
+// ─────────────────────────────────────────────────────────
 async function deleteAchat(id){
-  if(!confirm('Supprimer cet achat ?'))return;
+  if(!confirm('Supprimer cet achat ?')) return;
   await fbDelete('pos_achats',id);
   achats=achats.filter(a=>a.id!==id);
   renderAchats();
@@ -2001,24 +2100,34 @@ async function deleteAchat(id){
   toast('Achat supprimé','info');
 }
 
-const ACHAT_CAT_LABELS={
-  marchandises:'Marchandises',boissons:'Boissons',frais_generaux:'Frais généraux',
-  emballages:'Emballages',materiel:'Matériel',entretien:'Entretien',autre:'Autre'
-};
-const ACHAT_CAT_COLORS={
-  marchandises:'#0ea5e9',boissons:'#10b981',frais_generaux:'#f59e0b',
-  emballages:'#a855f7',materiel:'#f97316',entretien:'#06b6d4',autre:'#6b7280'
-};
-const ACHAT_MODE_LABELS={especes:'💵 Espèces',carte:'💳 Carte',cheque:'🧾 Chèque',virement:'🏦 Virement',credit:'⏳ Crédit'};
-
+// ─────────────────────────────────────────────────────────
+//  ACHATS — STATS
+// ─────────────────────────────────────────────────────────
 function renderAchatStats(){
-  const totalHT=achats.reduce((s,a)=>s+a.ht,0);
-  const totalTVA=achats.reduce((s,a)=>s+a.tva,0);
-  const totalTTC=achats.reduce((s,a)=>s+a.ttc,0);
-  document.getElementById('achat-stat-count').textContent=achats.length;
-  document.getElementById('achat-stat-ht').textContent=fmtEur(totalHT);
-  document.getElementById('achat-stat-tva').textContent=fmtEur(totalTVA);
-  document.getElementById('achat-stat-ttc').textContent=fmtEur(totalTTC);
+  const totalHT=achats.reduce((s,a)=>s+(a.totalHT||a.ht||0),0);
+  const totalTVA=achats.reduce((s,a)=>s+(a.tva||0),0);
+  const totalTTC=achats.reduce((s,a)=>s+(a.ttc||0),0);
+  const sc=document.getElementById('achat-stat-count');
+  const sh=document.getElementById('achat-stat-ht');
+  const st=document.getElementById('achat-stat-tva');
+  const sttc=document.getElementById('achat-stat-ttc');
+  if(sc) sc.textContent=achats.length;
+  if(sh) sh.textContent=fmtEur(totalHT);
+  if(st) st.textContent=fmtEur(totalTVA);
+  if(sttc) sttc.textContent=fmtEur(totalTTC);
+}
+
+// ─────────────────────────────────────────────────────────
+//  ACHATS — RENDER TABLE
+// ─────────────────────────────────────────────────────────
+function resetAchatFilters(){
+  const s=document.getElementById('achat-search');
+  const c=document.getElementById('achat-cat-filter');
+  const m=document.getElementById('achat-month-filter');
+  if(s) s.value='';
+  if(c) c.value='';
+  if(m) m.value='';
+  renderAchats();
 }
 
 function renderAchats(){
@@ -2026,31 +2135,40 @@ function renderAchats(){
   const catFilter=document.getElementById('achat-cat-filter')?.value||'';
   const monthFilter=document.getElementById('achat-month-filter')?.value||'';
   let filtered=achats.filter(a=>{
-    if(search&&!a.fournisseur.toLowerCase().includes(search)&&!a.description.toLowerCase().includes(search))return false;
-    if(catFilter&&a.categorie!==catFilter)return false;
+    if(search&&!(a.article||'').toLowerCase().includes(search)&&
+       !(a.fournisseur||'').toLowerCase().includes(search)&&
+       !(a.facture||'').toLowerCase().includes(search)) return false;
+    if(catFilter&&a.categorie!==catFilter) return false;
     if(monthFilter){
       const d=new Date(a.date);
       const ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-      if(ym!==monthFilter)return false;
+      if(ym!==monthFilter) return false;
     }
     return true;
   });
   const tbody=document.getElementById('achats-tbody');
-  if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" class="hist-empty">Aucun achat trouvé</td></tr>';return;}
+  if(!tbody) return;
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td colspan="13" class="hist-empty">Aucun achat trouvé</td></tr>';
+    return;
+  }
   tbody.innerHTML=filtered.map(a=>{
-    const d=new Date(a.date);
-    const dateStr=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const d=new Date(a.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
     const col=ACHAT_CAT_COLORS[a.categorie]||'#6b7280';
-    const catLabel=ACHAT_CAT_LABELS[a.categorie]||a.categorie;
+    const catLbl=ACHAT_CAT_LABELS[a.categorie]||a.categorie;
+    const ht=a.totalHT||a.ht||0;
     return `<tr>
-      <td style="font-size:12px;font-weight:600;">${dateStr}</td>
-      <td style="font-weight:700;">${a.fournisseur}</td>
-      <td><span class="achat-cat-badge" style="background:${col}22;color:${col};">${catLabel}</span></td>
-      <td style="font-size:12px;color:var(--muted2);">${a.description||'—'}</td>
-      <td style="font-family:'Syne',sans-serif;font-weight:700;">${fmtEur(a.ht)}</td>
-      <td style="color:var(--gold);font-size:12px;">${fmtEur(a.tva)}</td>
-      <td style="font-family:'Syne',sans-serif;font-weight:700;color:var(--accent);">${fmtEur(a.ttc)}</td>
-      <td style="font-size:11px;">${ACHAT_MODE_LABELS[a.mode]||a.mode}</td>
+      <td style="font-weight:600;font-size:12px;white-space:nowrap;">${d}</td>
+      <td><span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:${col}22;color:${col};">${catLbl}</span></td>
+      <td style="font-weight:700;">${a.article||'—'}</td>
+      <td style="font-size:12px;color:var(--muted2);">${a.fournisseur||'—'}</td>
+      <td style="text-align:right;font-family:'Syne',sans-serif;font-weight:700;">${a.qty}</td>
+      <td style="font-size:11px;color:var(--muted2);">${a.unite||'unité'}</td>
+      <td style="text-align:right;font-size:12px;">${fmtEur(a.prixHT||0)}</td>
+      <td style="text-align:right;font-family:'Syne',sans-serif;font-weight:700;">${fmtEur(ht)}</td>
+      <td style="text-align:right;color:var(--gold);font-size:12px;">${fmtEur(a.tva||0)}</td>
+      <td style="text-align:right;font-family:'Syne',sans-serif;font-weight:700;color:var(--accent);">${fmtEur(a.ttc||0)}</td>
+      <td style="font-size:11px;">${ACHAT_MODE_LABELS[a.mode]||a.mode||'—'}</td>
       <td style="font-size:11px;color:var(--muted2);">${a.facture||'—'}</td>
       <td><button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="deleteAchat('${a.id}')">🗑</button></td>
     </tr>`;
@@ -2058,214 +2176,479 @@ function renderAchats(){
 }
 
 // ─────────────────────────────────────────────────────────
-//  COMPTABILITÉ
+//  ACHATS — EXPORT PDF
+// ─────────────────────────────────────────────────────────
+async function exportAchatsPDF(){
+  if(!achats.length){toast('Aucun achat à exporter','error');return;}
+  toast('Génération du PDF...','info');
+  await loadJsPDF();
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('fr-FR');
+  // Header
+  doc.setFillColor(14,165,233);
+  doc.rect(0,0,297,18,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.text('CaisseFlow — Journal des Achats',14,12);
+  doc.setFontSize(9);
+  doc.text('Exporté le '+dateStr,240,12);
+  doc.setTextColor(30,30,30);
+
+  // Filtres actifs
+  const catFilter=document.getElementById('achat-cat-filter')?.value||'';
+  const monthFilter=document.getElementById('achat-month-filter')?.value||'';
+  let filtered=achats.filter(a=>{
+    if(catFilter&&a.categorie!==catFilter) return false;
+    if(monthFilter){
+      const d=new Date(a.date);
+      const ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      if(ym!==monthFilter) return false;
+    }
+    return true;
+  });
+
+  // Totaux
+  const totHT=filtered.reduce((s,a)=>s+(a.totalHT||a.ht||0),0);
+  const totTVA=filtered.reduce((s,a)=>s+(a.tva||0),0);
+  const totTTC=filtered.reduce((s,a)=>s+(a.ttc||0),0);
+
+  // Tableau
+  const headers=['Date','Catégorie','Article','Fournisseur','Qté','Unité','P.U. HT','Total HT','TVA','Total TTC','Mode paiement','N° Facture'];
+  const colWidths=[22,28,38,32,12,14,20,20,16,20,24,22];
+  const rows=filtered.map(a=>{
+    const d=new Date(a.date).toLocaleDateString('fr-FR');
+    return [
+      d,
+      ACHAT_CAT_LABELS[a.categorie]||a.categorie||'',
+      a.article||'',
+      a.fournisseur||'',
+      String(a.qty||0),
+      a.unite||'unité',
+      fmtEur(a.prixHT||0),
+      fmtEur(a.totalHT||a.ht||0),
+      fmtEur(a.tva||0),
+      fmtEur(a.ttc||0),
+      ACHAT_MODE_LABELS[a.mode]?.replace(/[^\w\s]/g,'')||a.mode||'',
+      a.facture||'—'
+    ];
+  });
+  // Ligne totaux
+  rows.push(['','','','TOTAL','','','',fmtEur(totHT),fmtEur(totTVA),fmtEur(totTTC),'','']);
+
+  drawPDFTable(doc,headers,rows,colWidths,24,true);
+
+  // Stats bas
+  let y=doc.lastAutoTable?doc.lastAutoTable.finalY+8:200;
+  if(y>190){doc.addPage();y=20;}
+  doc.setFontSize(8);doc.setTextColor(120,120,120);
+  doc.text(`${filtered.length} achats | HT: ${fmtEur(totHT)} | TVA: ${fmtEur(totTVA)} | TTC: ${fmtEur(totTTC)}`,14,y);
+
+  doc.save('achats_'+now.toISOString().slice(0,10)+'.pdf');
+  toast('📄 PDF achats téléchargé','success');
+}
+
+// ─────────────────────────────────────────────────────────
+//  COMPTABILITÉ — PÉRIODE
 // ─────────────────────────────────────────────────────────
 function getComptaPeriod(){
   const period=document.getElementById('compta-period')?.value||'month';
   const now=new Date();
-  let from,to;
-  to=new Date();
+  let from,to=new Date();
   if(period==='month'){
     from=new Date(now.getFullYear(),now.getMonth(),1);
-  } else if(period==='quarter'){
+  }else if(period==='quarter'){
     const q=Math.floor(now.getMonth()/3);
     from=new Date(now.getFullYear(),q*3,1);
-  } else if(period==='year'){
+  }else if(period==='year'){
     from=new Date(now.getFullYear(),0,1);
-  } else {
+  }else{
     from=new Date(2000,0,1);
   }
   return {from,to};
 }
 
+// ─────────────────────────────────────────────────────────
+//  COMPTABILITÉ — RENDER
+// ─────────────────────────────────────────────────────────
 function renderCompta(){
   const {from,to}=getComptaPeriod();
-  // Filter transactions
-  const txFiltered=transactions.filter(t=>{
-    const d=new Date(t.date);
-    return d>=from&&d<=to;
-  });
-  const achatsFiltered=achats.filter(a=>{
-    const d=new Date(a.date);
-    return d>=from&&d<=to;
-  });
+  const txF=transactions.filter(t=>{const d=new Date(t.date);return d>=from&&d<=to;});
+  const achF=achats.filter(a=>{const d=new Date(a.date);return d>=from&&d<=to;});
 
-  const caHT=txFiltered.reduce((s,t)=>s+t.subtotal,0);
-  const caTVA=txFiltered.reduce((s,t)=>s+t.tva,0);
-  const caTTC=txFiltered.reduce((s,t)=>s+t.total,0);
-  const achatsHT=achatsFiltered.reduce((s,a)=>s+a.ht,0);
-  const achatsTVA=achatsFiltered.reduce((s,a)=>s+a.tva,0);
-  const achatsTTC=achatsFiltered.reduce((s,a)=>s+a.ttc,0);
-  const margeBrute=caHT-achatsHT;
+  const caHT=txF.reduce((s,t)=>s+(t.subtotal||t.total/1.2),0);
+  const caTVA=txF.reduce((s,t)=>s+(t.tva||t.total*0.2/1.2),0);
+  const caTTC=txF.reduce((s,t)=>s+t.total,0);
+  const achatsHT=achF.reduce((s,a)=>s+(a.totalHT||a.ht||0),0);
+  const achatsTVA=achF.reduce((s,a)=>s+(a.tva||0),0);
+  const achatsTTC=achF.reduce((s,a)=>s+(a.ttc||0),0);
+  const marge=caHT-achatsHT;
   const tvaNette=caTVA-achatsTVA;
-  const resultat=margeBrute;
 
-  // KPIs
-  document.getElementById('ck-ca').textContent=fmtEur(caTTC);
-  document.getElementById('ck-achats').textContent=fmtEur(achatsTTC);
-  document.getElementById('ck-marge').textContent=fmtEur(margeBrute);
-  const margeEl=document.getElementById('ck-marge');
-  margeEl.style.color=margeBrute>=0?'var(--green2)':'var(--red2)';
-  document.getElementById('ck-tva-c').textContent=fmtEur(caTVA);
-  document.getElementById('ck-tva-d').textContent=fmtEur(achatsTVA);
-  document.getElementById('ck-tva-net').textContent=fmtEur(tvaNette);
-  document.getElementById('ck-result').textContent=fmtEur(resultat);
-  document.getElementById('ck-result').style.color=resultat>=0?'var(--green2)':'var(--red2)';
-  document.getElementById('ck-tx').textContent=txFiltered.length;
+  const set=(id,val,isAmt=true)=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=isAmt?fmtEur(val):String(val);
+  };
+  set('ck-ca',caTTC);
+  set('ck-achats',achatsTTC);
+  set('ck-marge',marge);
+  set('ck-result',marge);
+  set('ck-tva-c',caTVA);
+  set('ck-tva-d',achatsTVA);
+  set('ck-tva-net',tvaNette);
+  set('ck-tx',txF.length,false);
+  const mEl=document.getElementById('ck-marge');
+  if(mEl) mEl.style.color=marge>=0?'var(--green2)':'var(--red2)';
+  const rEl=document.getElementById('ck-result');
+  if(rEl) rEl.style.color=marge>=0?'var(--green2)':'var(--red2)';
 
-  // Bilan
-  // ACTIF
-  const especes=txFiltered.filter(t=>t.mode==='especes').reduce((s,t)=>s+t.total,0);
-  const banque=txFiltered.filter(t=>t.mode==='carte').reduce((s,t)=>s+t.total,0);
+  // BILAN ACTIF
+  const especes=txF.filter(t=>t.mode==='especes').reduce((s,t)=>s+t.total,0);
+  const banque=txF.filter(t=>t.mode==='carte'||t.mode==='virement').reduce((s,t)=>s+t.total,0);
+  const stockEstime=achatsHT*0.25;
   const actifRows=[
-    {compte:'53',label:'Caisse (espèces)',val:especes},
-    {compte:'51',label:'Banque (carte)',val:banque},
-    {compte:'37',label:'Stock marchandises (estimé)',val:achatsHT*0.3},
+    {compte:'53',label:'Caisse — espèces',val:especes},
+    {compte:'51',label:'Banque — carte/virement',val:banque},
+    {compte:'37',label:'Stock marchandises (estimé 25%)',val:stockEstime},
     {compte:'44566',label:'TVA déductible',val:achatsTVA},
   ];
-  document.getElementById('bilan-actif').innerHTML=actifRows.map(r=>`
-    <div class="bilan-row">
-      <span><span class="bilan-compte">${r.compte}</span>${r.label}</span>
-      <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--green2);">${fmtEur(r.val)}</span>
-    </div>`).join('');
-  const totalActif=actifRows.reduce((s,r)=>s+r.val,0);
-  document.getElementById('bilan-total-actif').textContent=fmtEur(totalActif);
-
-  // PASSIF
   const passifRows=[
     {compte:'44571',label:'TVA collectée',val:caTVA},
-    {compte:'401',label:'Dettes fournisseurs',val:achatsFiltered.filter(a=>a.mode==='credit').reduce((s,a)=>s+a.ttc,0)},
-    {compte:'10',label:'Capital / Résultat',val:margeBrute},
+    {compte:'401',label:'Dettes fournisseurs (crédit)',val:achF.filter(a=>a.mode==='credit').reduce((s,a)=>s+(a.ttc||0),0)},
+    {compte:'106',label:'Réserves / Résultat',val:marge},
   ];
-  document.getElementById('bilan-passif').innerHTML=passifRows.map(r=>`
-    <div class="bilan-row">
-      <span><span class="bilan-compte">${r.compte}</span>${r.label}</span>
-      <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--red2);">${fmtEur(r.val)}</span>
-    </div>`).join('');
+  const totalActif=actifRows.reduce((s,r)=>s+r.val,0);
   const totalPassif=passifRows.reduce((s,r)=>s+r.val,0);
-  document.getElementById('bilan-total-passif').textContent=fmtEur(totalPassif);
+
+  const bilanRow=(r,side)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:7px;font-size:12px;background:var(--surface2);">
+      <span><span style="font-size:10px;font-weight:800;color:var(--muted2);margin-right:5px;">${r.compte}</span>${r.label}</span>
+      <span style="font-family:'Syne',sans-serif;font-weight:700;color:${side==='actif'?'var(--green2)':'var(--red2)'};">${fmtEur(r.val)}</span>
+    </div>`;
+
+  const baEl=document.getElementById('bilan-actif');
+  const bpEl=document.getElementById('bilan-passif');
+  if(baEl) baEl.innerHTML=actifRows.map(r=>bilanRow(r,'actif')).join('');
+  if(bpEl) bpEl.innerHTML=passifRows.map(r=>bilanRow(r,'passif')).join('');
+  set('bilan-total-actif',totalActif);
+  set('bilan-total-passif',totalPassif);
 
   // Modes encaissement
-  const modesData=[
+  const modeData=[
     {label:'Espèces',val:especes,color:'var(--green2)'},
-    {label:'Carte',val:banque,color:'var(--accent2)'},
+    {label:'Carte bancaire',val:banque,color:'var(--accent)'},
   ];
-  const maxMode=Math.max(...modesData.map(m=>m.val),1);
-  document.getElementById('compta-modes').innerHTML=modesData.map(m=>`
-    <div style="display:flex;flex-direction:column;gap:4px;">
-      <div style="display:flex;justify-content:space-between;font-size:12px;">
+  const maxM=Math.max(...modeData.map(m=>m.val),1);
+  const modesEl=document.getElementById('compta-modes');
+  if(modesEl) modesEl.innerHTML=modeData.map(m=>`
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
         <span style="font-weight:600;">${m.label}</span>
         <span style="font-family:'Syne',sans-serif;font-weight:700;color:${m.color};">${fmtEur(m.val)}</span>
       </div>
-      <div style="height:8px;border-radius:99px;background:var(--surface3);">
-        <div style="height:100%;border-radius:99px;background:${m.color};width:${(m.val/maxMode*100).toFixed(1)}%;transition:width .5s;"></div>
+      <div style="height:7px;border-radius:99px;background:var(--surface3);">
+        <div style="height:100%;border-radius:99px;background:${m.color};width:${(m.val/maxM*100).toFixed(1)}%;transition:width .5s;"></div>
       </div>
     </div>`).join('');
 
   // Achats par catégorie
-  const catTotals={};
-  achatsFiltered.forEach(a=>{ catTotals[a.categorie]=(catTotals[a.categorie]||0)+a.ht; });
-  const maxCat=Math.max(...Object.values(catTotals),1);
-  document.getElementById('compta-achat-cats').innerHTML=Object.entries(catTotals).map(([cat,val])=>{
-    const col=ACHAT_CAT_COLORS[cat]||'#6b7280';
-    const lbl=ACHAT_CAT_LABELS[cat]||cat;
-    return `<div style="display:flex;flex-direction:column;gap:3px;">
-      <div style="display:flex;justify-content:space-between;font-size:11px;">
-        <span style="font-weight:600;">${lbl}</span>
-        <span style="font-family:'Syne',sans-serif;font-weight:700;color:${col};">${fmtEur(val)}</span>
-      </div>
-      <div style="height:6px;border-radius:99px;background:var(--surface3);">
-        <div style="height:100%;border-radius:99px;background:${col};width:${(val/maxCat*100).toFixed(1)}%;"></div>
-      </div>
-    </div>`;
-  }).join('')||'<div style="font-size:12px;color:var(--muted);">Aucun achat sur la période</div>';
+  const catTot={};
+  achF.forEach(a=>{ catTot[a.categorie]=(catTot[a.categorie]||0)+(a.totalHT||a.ht||0); });
+  const maxC=Math.max(...Object.values(catTot),1);
+  const catsEl=document.getElementById('compta-achat-cats');
+  if(catsEl) catsEl.innerHTML=Object.entries(catTot).length
+    ? Object.entries(catTot).sort((a,b)=>b[1]-a[1]).map(([cat,val])=>{
+        const col=ACHAT_CAT_COLORS[cat]||'#6b7280';
+        const lbl=ACHAT_CAT_LABELS[cat]||cat;
+        return `<div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;">
+            <span style="font-weight:600;">${lbl}</span>
+            <span style="font-family:'Syne',sans-serif;font-weight:700;color:${col};">${fmtEur(val)}</span>
+          </div>
+          <div style="height:5px;border-radius:99px;background:var(--surface3);">
+            <div style="height:100%;border-radius:99px;background:${col};width:${(val/maxC*100).toFixed(1)}%;"></div>
+          </div>
+        </div>`;
+      }).join('')
+    : '<div style="font-size:12px;color:var(--muted);">Aucun achat sur la période</div>';
 
-  renderGrandLivre(txFiltered, achatsFiltered);
+  renderGrandLivre(txF,achF);
 }
 
-function renderGrandLivre(txFiltered, achatsFiltered){
-  if(!txFiltered||!achatsFiltered){
+// ─────────────────────────────────────────────────────────
+//  GRAND LIVRE
+// ─────────────────────────────────────────────────────────
+const GL_COMPTES={
+  '53':'Caisse','51':'Banque','707':'Ventes de marchandises',
+  '607':'Achats de marchandises','606':'Achats emballages',
+  '44571':'TVA collectée','44566':'TVA déductible',
+  '401':'Fournisseurs','2154':'Matériel','627':'Frais généraux'
+};
+
+function renderGrandLivre(txFiltered,achFiltered){
+  if(!txFiltered||!achFiltered){
     const {from,to}=getComptaPeriod();
     txFiltered=transactions.filter(t=>{const d=new Date(t.date);return d>=from&&d<=to;});
-    achatsFiltered=achats.filter(a=>{const d=new Date(a.date);return d>=from&&d<=to;});
+    achFiltered=achats.filter(a=>{const d=new Date(a.date);return d>=from&&d<=to;});
   }
   const compteFilter=document.getElementById('gl-compte-filter')?.value||'';
 
-  // Build journal entries
+  // Build all journal entries
   const entries=[];
   txFiltered.forEach(t=>{
     const d=new Date(t.date);
     const compteEnc=t.mode==='especes'?'53':'51';
-    const encLabel=t.mode==='especes'?'Caisse':'Banque';
-    if(!compteFilter||compteFilter===compteEnc||compteFilter==='70'||compteFilter==='44571'){
-      if(!compteFilter||compteFilter===compteEnc)
-        entries.push({date:d,compte:compteEnc,label:encLabel+' — Vente '+t.receiptNum,ref:t.receiptNum,debit:t.total,credit:0});
-      if(!compteFilter||compteFilter==='70')
-        entries.push({date:d,compte:'707',label:'Ventes de marchandises — '+t.receiptNum,ref:t.receiptNum,debit:0,credit:t.subtotal});
-      if(!compteFilter||compteFilter==='44571')
-        entries.push({date:d,compte:'44571',label:'TVA collectée 20% — '+t.receiptNum,ref:t.receiptNum,debit:0,credit:t.tva});
-    }
+    const ht=t.subtotal||t.total/1.2;
+    const tva=t.tva||t.total*0.2/1.2;
+    if(!compteFilter||compteFilter===compteEnc)
+      entries.push({date:d,compte:compteEnc,libelle:GL_COMPTES[compteEnc]||'',label:'Vente encaissée — '+t.receiptNum,ref:t.receiptNum,debit:t.total,credit:0});
+    if(!compteFilter||compteFilter==='707')
+      entries.push({date:d,compte:'707',libelle:'Ventes de marchandises',label:'Ticket '+t.receiptNum,ref:t.receiptNum,debit:0,credit:ht});
+    if(!compteFilter||compteFilter==='44571')
+      entries.push({date:d,compte:'44571',libelle:'TVA collectée',label:'TVA sur vente '+t.receiptNum,ref:t.receiptNum,debit:0,credit:tva});
   });
-  achatsFiltered.forEach(a=>{
+  achFiltered.forEach(a=>{
     const d=new Date(a.date);
-    if(!compteFilter||compteFilter==='60'||compteFilter==='44566'){
-      if(!compteFilter||compteFilter==='60')
-        entries.push({date:d,compte:'607',label:'Achats — '+a.fournisseur+(a.description?' ('+a.description+')':''),ref:a.facture||'—',debit:a.ht,credit:0});
-      if(!compteFilter||compteFilter==='44566')
-        entries.push({date:d,compte:'44566',label:'TVA déductible — '+a.fournisseur,ref:a.facture||'—',debit:a.tva,credit:0});
-      if(!compteFilter||compteFilter==='51'||compteFilter==='53'){
+    const cptAchat=ACHAT_CAT_COMPTES[a.categorie]||'607';
+    const ht=a.totalHT||a.ht||0;
+    if(!compteFilter||compteFilter==='607'||compteFilter===cptAchat)
+      entries.push({date:d,compte:cptAchat,libelle:GL_COMPTES[cptAchat]||'Achats',label:(a.article||'Achat')+' — '+a.fournisseur,ref:a.facture||'—',debit:ht,credit:0});
+    if(!compteFilter||compteFilter==='44566')
+      entries.push({date:d,compte:'44566',libelle:'TVA déductible',label:'TVA achat — '+a.fournisseur,ref:a.facture||'—',debit:a.tva||0,credit:0});
+    if(!compteFilter||compteFilter==='401'||compteFilter==='53'||compteFilter==='51'){
+      if(a.mode==='credit'){
+        if(!compteFilter||compteFilter==='401')
+          entries.push({date:d,compte:'401',libelle:'Fournisseurs',label:'Dette fournisseur — '+a.fournisseur,ref:a.facture||'—',debit:0,credit:a.ttc||0});
+      }else{
         const compteSort=a.mode==='especes'?'53':'51';
         if(!compteFilter||compteFilter===compteSort)
-          entries.push({date:d,compte:compteSort,label:'Règlement achat — '+a.fournisseur,ref:a.facture||'—',debit:0,credit:a.ttc});
+          entries.push({date:d,compte:compteSort,libelle:GL_COMPTES[compteSort]||'',label:'Règlement achat — '+a.fournisseur,ref:a.facture||'—',debit:0,credit:a.ttc||0});
       }
     }
   });
 
   entries.sort((a,b)=>a.date-b.date);
-
-  // Calculate running balance
-  let solde=0;
   const tbody=document.getElementById('gl-tbody');
-  if(!entries.length){tbody.innerHTML='<tr><td colspan="7" class="hist-empty">Aucune écriture sur la période</td></tr>';return;}
+  if(!tbody) return;
+  if(!entries.length){tbody.innerHTML='<tr><td colspan="8" class="hist-empty">Aucune écriture sur la période</td></tr>';return;}
+
+  let solde=0;
   tbody.innerHTML=entries.map(e=>{
     solde+=e.debit-e.credit;
-    const dateStr=e.date.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const ds=e.date.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const soldeColor=solde>=0?'var(--green2)':'var(--red2)';
     return `<tr>
-      <td style="font-size:12px;">${dateStr}</td>
+      <td style="font-size:12px;white-space:nowrap;">${ds}</td>
       <td><span style="font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--accent2);">${e.compte}</span></td>
+      <td style="font-size:11px;color:var(--muted2);">${e.libelle}</td>
       <td style="font-size:12px;">${e.label}</td>
       <td style="font-size:11px;color:var(--muted2);">${e.ref}</td>
-      <td style="text-align:right;" class="gl-debit">${e.debit>0?fmtEur(e.debit):'—'}</td>
-      <td style="text-align:right;" class="gl-credit">${e.credit>0?fmtEur(e.credit):'—'}</td>
-      <td style="text-align:right;" class="gl-solde" style="color:${solde>=0?'var(--green2)':'var(--red2)'};">${fmtEur(solde)}</td>
+      <td style="text-align:right;font-family:'Syne',sans-serif;font-weight:700;color:var(--red2);">${e.debit>0?fmtEur(e.debit):'—'}</td>
+      <td style="text-align:right;font-family:'Syne',sans-serif;font-weight:700;color:var(--green2);">${e.credit>0?fmtEur(e.credit):'—'}</td>
+      <td style="text-align:right;font-family:'Syne',sans-serif;font-weight:700;color:${soldeColor};">${fmtEur(solde)}</td>
     </tr>`;
   }).join('');
 }
 
-function exportComptaCSV(){
+// ─────────────────────────────────────────────────────────
+//  PDF HELPERS
+// ─────────────────────────────────────────────────────────
+async function loadJsPDF(){
+  if(window.jspdf) return;
+  await new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
+  await new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+    s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
+
+function drawPDFTable(doc,headers,rows,colWidths,startY,isLandscape){
+  doc.autoTable({
+    head:[headers],
+    body:rows,
+    startY:startY,
+    theme:'striped',
+    headStyles:{fillColor:[14,165,233],textColor:255,fontStyle:'bold',fontSize:8,halign:'center'},
+    bodyStyles:{fontSize:8,textColor:[30,30,30]},
+    alternateRowStyles:{fillColor:[240,245,255]},
+    columnStyles:colWidths.reduce((acc,w,i)=>({...acc,[i]:{cellWidth:w}}),{}),
+    margin:{left:10,right:10},
+    didDrawPage:(data)=>{
+      // Footer pagination
+      const pageCount=doc.internal.getNumberOfPages();
+      doc.setFontSize(7);doc.setTextColor(150,150,150);
+      const pw=isLandscape?297:210;
+      doc.text('CaisseFlow — Page '+data.pageNumber+' / '+pageCount,pw/2,doc.internal.pageSize.height-5,{align:'center'});
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+//  HISTORIQUE — EXPORT PDF (remplace exportCSV)
+// ─────────────────────────────────────────────────────────
+async function exportCSV(){
+  if(!transactions.length){toast('Aucune transaction à exporter','error');return;}
+  toast('Génération du PDF historique...','info');
+  await loadJsPDF();
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const now=new Date();
+  // Header
+  doc.setFillColor(14,165,233);
+  doc.rect(0,0,297,18,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.text('CaisseFlow — Historique des transactions',14,12);
+  doc.setFontSize(9);
+  doc.text('Exporté le '+now.toLocaleDateString('fr-FR'),232,12);
+  doc.setTextColor(30,30,30);
+
+  // Filtre actif
+  let filtered=[...transactions];
+  const fDate=document.getElementById('hist-filter-date')?.value||'';
+  const fMode=document.getElementById('hist-filter-mode')?.value||'';
+  const fSearch=document.getElementById('hist-search')?.value?.toLowerCase()||'';
+  if(fDate) filtered=filtered.filter(t=>new Date(t.date).toISOString().slice(0,10)===fDate);
+  if(fMode) filtered=filtered.filter(t=>t.mode===fMode);
+  if(fSearch) filtered=filtered.filter(t=>(t.receiptNum||'').toLowerCase().includes(fSearch)||(t.caissier||'').toLowerCase().includes(fSearch));
+
+  const headers=['N° Reçu','Date','Heure','Article(s)','Qté','Mode paiement','Total TTC','Reçu','Rendu','Caissier','Note'];
+  const colWidths=[22,20,16,70,12,22,20,16,16,20,22];
+
+  const rows=filtered.map(t=>{
+    const d=new Date(t.date);
+    const articles=t.items.map(i=>i.name+'x'+i.qty).join(', ');
+    const totalQty=t.items.reduce((s,i)=>s+(i.qty||0),0);
+    return [
+      t.receiptNum||'',
+      d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}),
+      d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
+      articles,
+      String(totalQty),
+      t.mode==='especes'?'Espèces':t.mode==='carte'?'Carte':'Autre',
+      fmtEur(t.total),
+      fmtEur(t.montantRecu||t.total),
+      fmtEur(t.rendu||0),
+      t.caissier||'',
+      t.note||''
+    ];
+  });
+
+  // Ligne totaux
+  const totTTC=filtered.reduce((s,t)=>s+t.total,0);
+  rows.push(['','','','TOTAL','','',fmtEur(totTTC),'','','','']);
+
+  drawPDFTable(doc,headers,rows,colWidths,24,true);
+
+  let y=doc.lastAutoTable?doc.lastAutoTable.finalY+8:195;
+  if(y>190){doc.addPage();y=20;}
+  doc.setFontSize(8);doc.setTextColor(120,120,120);
+  doc.text(filtered.length+' transactions | Total: '+fmtEur(totTTC),14,y);
+
+  doc.save('historique_'+now.toISOString().slice(0,10)+'.pdf');
+  toast('📄 PDF historique téléchargé','success');
+}
+
+// ─────────────────────────────────────────────────────────
+//  COMPTABILITÉ — EXPORT PDF
+// ─────────────────────────────────────────────────────────
+async function exportComptaPDF(){
+  toast('Génération du PDF comptabilité...','info');
+  await loadJsPDF();
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const now=new Date();
   const {from,to}=getComptaPeriod();
+  const periodLabel=from.toLocaleDateString('fr-FR')+' au '+to.toLocaleDateString('fr-FR');
+
+  // Header
+  doc.setFillColor(14,165,233);
+  doc.rect(0,0,297,18,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.text('CaisseFlow — Grand Livre comptable',14,12);
+  doc.setFontSize(9);
+  doc.text('Période: '+periodLabel,170,12);
+  doc.setTextColor(30,30,30);
+
   const txF=transactions.filter(t=>{const d=new Date(t.date);return d>=from&&d<=to;});
   const achF=achats.filter(a=>{const d=new Date(a.date);return d>=from&&d<=to;});
-  const rows=[['Date','N° Compte','Libellé','Référence','Débit','Crédit']];
+
+  // Collect all GL entries
+  const entries=[];
   txF.forEach(t=>{
-    const d=new Date(t.date).toLocaleDateString('fr-FR');
-    const c=t.mode==='especes'?'53':'51';
-    rows.push([d,c,'Encaissement — '+t.receiptNum,t.receiptNum,t.total.toFixed(2),'']);
-    rows.push([d,'707','Ventes — '+t.receiptNum,t.receiptNum,'',t.subtotal.toFixed(2)]);
-    rows.push([d,'44571','TVA collectée — '+t.receiptNum,t.receiptNum,'',t.tva.toFixed(2)]);
+    const d=new Date(t.date);
+    const compteEnc=t.mode==='especes'?'53':'51';
+    const ht=t.subtotal||t.total/1.2;
+    const tva=t.tva||t.total*0.2/1.2;
+    entries.push({date:d,compte:compteEnc,libelle:GL_COMPTES[compteEnc]||'',label:'Vente — '+t.receiptNum,ref:t.receiptNum,debit:t.total,credit:0});
+    entries.push({date:d,compte:'707',libelle:'Ventes marchandises',label:'Ticket '+t.receiptNum,ref:t.receiptNum,debit:0,credit:ht});
+    entries.push({date:d,compte:'44571',libelle:'TVA collectée',label:'TVA vente '+t.receiptNum,ref:t.receiptNum,debit:0,credit:tva});
   });
   achF.forEach(a=>{
-    const d=new Date(a.date).toLocaleDateString('fr-FR');
-    rows.push([d,'607','Achats — '+a.fournisseur,a.facture||'',a.ht.toFixed(2),'']);
-    rows.push([d,'44566','TVA déductible — '+a.fournisseur,a.facture||'',a.tva.toFixed(2),'']);
+    const d=new Date(a.date);
+    const cptAchat=ACHAT_CAT_COMPTES[a.categorie]||'607';
+    const ht=a.totalHT||a.ht||0;
+    entries.push({date:d,compte:cptAchat,libelle:GL_COMPTES[cptAchat]||'Achats',label:(a.article||'Achat')+' — '+a.fournisseur,ref:a.facture||'—',debit:ht,credit:0});
+    entries.push({date:d,compte:'44566',libelle:'TVA déductible',label:'TVA achat — '+a.fournisseur,ref:a.facture||'—',debit:a.tva||0,credit:0});
+    const compteSort=a.mode==='credit'?'401':a.mode==='especes'?'53':'51';
+    entries.push({date:d,compte:compteSort,libelle:GL_COMPTES[compteSort]||'',label:'Règlement — '+a.fournisseur,ref:a.facture||'—',debit:0,credit:a.ttc||0});
   });
-  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='grand_livre_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
-  URL.revokeObjectURL(url);
-  toast('📊 Grand Livre exporté','success');
+  entries.sort((a,b)=>a.date-b.date);
+
+  const headers=['Date','N° Cpte','Intitulé','Libellé écriture','Réf. pièce','Débit (€)','Crédit (€)','Solde (€)'];
+  const colWidths=[22,16,30,60,22,22,22,22];
+  let solde=0;
+  const rows=entries.map(e=>{
+    solde+=e.debit-e.credit;
+    return [
+      e.date.toLocaleDateString('fr-FR'),
+      e.compte,
+      e.libelle,
+      e.label,
+      e.ref,
+      e.debit>0?fmtEur(e.debit):'',
+      e.credit>0?fmtEur(e.credit):'',
+      fmtEur(solde)
+    ];
+  });
+
+  drawPDFTable(doc,headers,rows,colWidths,24,true);
+
+  // KPI recap
+  const caHT=txF.reduce((s,t)=>s+(t.subtotal||t.total/1.2),0);
+  const caTVA=txF.reduce((s,t)=>s+(t.tva||t.total*0.2/1.2),0);
+  const caTTC=txF.reduce((s,t)=>s+t.total,0);
+  const achHT=achF.reduce((s,a)=>s+(a.totalHT||a.ht||0),0);
+  const achTVA=achF.reduce((s,a)=>s+(a.tva||0),0);
+  let y2=doc.lastAutoTable?doc.lastAutoTable.finalY+10:200;
+  if(y2>185){doc.addPage();y2=20;}
+  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(14,165,233);
+  doc.text('RÉSUMÉ DE PÉRIODE',14,y2);
+  y2+=5;
+  doc.setFont('helvetica','normal');doc.setTextColor(50,50,50);
+  doc.text('CA TTC: '+fmtEur(caTTC)+'  |  CA HT: '+fmtEur(caHT)+'  |  TVA collectée: '+fmtEur(caTVA),14,y2);
+  y2+=5;
+  doc.text('Achats HT: '+fmtEur(achHT)+'  |  TVA déductible: '+fmtEur(achTVA)+'  |  Marge brute: '+fmtEur(caHT-achHT),14,y2);
+
+  doc.save('grand_livre_'+now.toISOString().slice(0,10)+'.pdf');
+  toast('📄 PDF comptabilité téléchargé','success');
 }
+
+// Alias for old button
+function exportComptaCSV(){ exportComptaPDF(); }
+
 
 // ─────────────────────────────────────────────────────────
 //  INIT
