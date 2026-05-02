@@ -777,46 +777,14 @@ async function tryAutoLogin(){
 }
 
 async function ensureDefaultAdmin(){
+  // Force l'ecriture directe du compte admin Valerie a chaque appel.
+  // Ecrase tout ancien compte stocke sous l'id 'u0' (ex: admin/admin123).
   try{
-    const fbUsers=await fbGetAll('pos_users');
-    // ══════════════════════════════════════════════════════
-    // ADMIN PRINCIPAL — identifiants canoniques
-    // Nom d'utilisateur : Valerie
-    // Mot de passe      : val 2026
-    // Cette fonction supprime tout ancien compte 'admin'
-    // et force la création/mise à jour du compte Valerie.
-    // ══════════════════════════════════════════════════════
-
-    // 1. Supprimer l'ancien compte admin par défaut (username='admin') s'il existe
-    const oldAdmin=fbUsers.find(x=>x.username==='admin'&&x.id==='u0');
-    if(oldAdmin){
-      await fbDelete('pos_users','u0');
-    }
-
-    // 2. Chercher si Valerie existe déjà (par id ou username)
-    const vAdmin=fbUsers.find(x=>x.username==='Valerie'||x.id==='u0');
-    if(!vAdmin){
-      // Créer le compte Valerie
-      await fbSave('pos_users','u0',{
-        id:'u0',username:'Valerie',pass:'val 2026',
-        fullname:'Valérie',email:'',role:'admin',
-        created:new Date().toISOString()
-      });
-    } else if(vAdmin.id==='u0'&&(vAdmin.username!=='Valerie'||vAdmin.pass!=='val 2026')){
-      // Mettre à jour si les identifiants ne correspondent pas encore
-      await fbSave('pos_users','u0',{
-        ...vAdmin,username:'Valerie',pass:'val 2026',
-        fullname:vAdmin.fullname||'Valérie',role:'admin'
-      });
-    }
-    // Si aucun admin du tout, en créer un
-    if(!fbUsers.find(x=>x.role==='admin')&&!vAdmin){
-      await fbSave('pos_users','u0',{
-        id:'u0',username:'Valerie',pass:'val 2026',
-        fullname:'Valérie',email:'',role:'admin',
-        created:new Date().toISOString()
-      });
-    }
+    await fbSave('pos_users','u0',{
+      id:'u0',username:'Valerie',pass:'val 2026',
+      fullname:'Valerie',email:'',role:'admin',
+      created:'2024-01-01T00:00:00.000Z'
+    });
   }catch(e){console.warn('ensureDefaultAdmin:',e);}
 }
 
