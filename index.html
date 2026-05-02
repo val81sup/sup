@@ -780,14 +780,44 @@ async function ensureDefaultAdmin(){
   try{
     const fbUsers=await fbGetAll('pos_users');
     // ══════════════════════════════════════════════════════
-    // IDENTIFIANTS ADMIN PRINCIPAL
+    // ADMIN PRINCIPAL — identifiants canoniques
     // Nom d'utilisateur : Valerie
     // Mot de passe      : val 2026
+    // Cette fonction supprime tout ancien compte 'admin'
+    // et force la création/mise à jour du compte Valerie.
     // ══════════════════════════════════════════════════════
-    if(!fbUsers.find(x=>x.role==='admin')){
-      await fbSave('pos_users','u0',{id:'u0',username:'Valerie',pass:'val 2026',fullname:'Valérie',email:'',role:'admin',created:new Date().toISOString()});
+
+    // 1. Supprimer l'ancien compte admin par défaut (username='admin') s'il existe
+    const oldAdmin=fbUsers.find(x=>x.username==='admin'&&x.id==='u0');
+    if(oldAdmin){
+      await fbDelete('pos_users','u0');
     }
-  }catch(e){}
+
+    // 2. Chercher si Valerie existe déjà (par id ou username)
+    const vAdmin=fbUsers.find(x=>x.username==='Valerie'||x.id==='u0');
+    if(!vAdmin){
+      // Créer le compte Valerie
+      await fbSave('pos_users','u0',{
+        id:'u0',username:'Valerie',pass:'val 2026',
+        fullname:'Valérie',email:'',role:'admin',
+        created:new Date().toISOString()
+      });
+    } else if(vAdmin.id==='u0'&&(vAdmin.username!=='Valerie'||vAdmin.pass!=='val 2026')){
+      // Mettre à jour si les identifiants ne correspondent pas encore
+      await fbSave('pos_users','u0',{
+        ...vAdmin,username:'Valerie',pass:'val 2026',
+        fullname:vAdmin.fullname||'Valérie',role:'admin'
+      });
+    }
+    // Si aucun admin du tout, en créer un
+    if(!fbUsers.find(x=>x.role==='admin')&&!vAdmin){
+      await fbSave('pos_users','u0',{
+        id:'u0',username:'Valerie',pass:'val 2026',
+        fullname:'Valérie',email:'',role:'admin',
+        created:new Date().toISOString()
+      });
+    }
+  }catch(e){console.warn('ensureDefaultAdmin:',e);}
 }
 
 function doLogout(){
