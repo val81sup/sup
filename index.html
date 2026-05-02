@@ -34,7 +34,14 @@
   window._fbSDK  = { collection, doc, setDoc, getDoc, getDocs, deleteDoc,
                      createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut };
   window._fbReady = true;
-  // Si l'app attend firebase, la débloquer
+  // Débloquer le bouton de connexion
+  const loginBtn = document.getElementById('btn-login');
+  if(loginBtn){
+    loginBtn.disabled = false;
+    loginBtn.style.opacity = '1';
+    loginBtn.textContent = 'Se connecter →';
+  }
+  // Notifier l'app
   document.dispatchEvent(new Event('firebase-ready'));
 </script>
 
@@ -305,7 +312,7 @@ body.light-mode .receipt-btn{background:var(--surface2);border-color:var(--borde
         <button type="button" onclick="togglePwd()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:0;"><span id="eye-icon">👁</span></button>
       </div>
     </div>
-    <button class="btn-login" id="btn-login" onclick="doLogin()">Se connecter →</button>
+    <button class="btn-login" id="btn-login" onclick="doLogin()" disabled style="opacity:.5;">⏳ Chargement...</button>
     <div class="login-err" id="login-err">❌ Identifiants incorrects.</div>
     <div class="firebase-badge"><div class="fb-dot"></div><span>Données synchronisées via Firebase — sup-tata-val</span></div>
   </div>
@@ -774,6 +781,26 @@ async function fbGetAll(col){
   }catch(e){ console.warn('fbGetAll', col, e); return []; }
 }
 
+// ─── ATTENTE FIREBASE PRÊT ───
+// Retourne une Promise qui se résout dès que window._fbDb est disponible.
+// Timeout de 8 secondes pour éviter un blocage infini.
+function waitForFirebase(){
+  return new Promise((resolve, reject) => {
+    if(window._fbReady && window._fbDb && window._fbSDK){
+      resolve(); return;
+    }
+    const start = Date.now();
+    const iv = setInterval(() => {
+      if(window._fbReady && window._fbDb && window._fbSDK){
+        clearInterval(iv); resolve();
+      } else if(Date.now() - start > 8000){
+        clearInterval(iv);
+        reject(new Error('Firebase timeout — vérifiez votre connexion internet'));
+      }
+    }, 50);
+  });
+}
+
 // ─── AUTH ───
 function togglePwd(){const i=document.getElementById('inp-pass'),e=document.getElementById('eye-icon');i.type=i.type==='password'?'text':'password';e.textContent=i.type==='password'?'👁':'🙈';}
 function togglePwdNew(){const i=document.getElementById('new-pass'),e=document.getElementById('eye-new');i.type=i.type==='password'?'text':'password';e.textContent=i.type==='password'?'👁':'🙈';}
@@ -785,6 +812,16 @@ async function doLogin(){
   err.style.display='none';
   if(!u||!p){err.textContent='Remplissez les deux champs.';err.style.display='block';return;}
   btn.textContent='Connexion...';btn.disabled=true;
+
+  // Attendre que Firebase soit complètement initialisé
+  try{
+    await waitForFirebase();
+  }catch(e){
+    err.textContent='❌ Impossible de joindre Firebase. Vérifiez votre connexion.';
+    err.style.display='block';
+    btn.textContent='Se connecter →';btn.disabled=false;
+    return;
+  }
 
   // S'assurer que l'admin Valerie existe dans Firestore
   await ensureDefaultAdmin();
@@ -838,6 +875,13 @@ async function tryAutoLogin(){
   const sess = JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');
   if(!sess){ showLoading(false); document.getElementById('login-page').style.display='flex'; return; }
   showLoading(true); animateProgress();
+  // Attendre Firebase avant toute opération Firestore
+  try{ await waitForFirebase(); }
+  catch(e){
+    showLoading(false);
+    document.getElementById('login-page').style.display='flex';
+    return;
+  }
   await ensureDefaultAdmin();
   const fbUsers = await fbGetAll('pos_users');
   const found   = fbUsers.find(x => x.username===sess.username && x.pass===sess.pass);
@@ -1604,19 +1648,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('loading-screen').style.display='flex';
   document.getElementById('login-page').style.display='none';
   document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
-  // Attendre que Firebase soit prêt avant de tenter l'auto-login
-  if(window._fbReady){
-    tryAutoLogin();
-  } else {
-    document.addEventListener('firebase-ready', ()=>tryAutoLogin(), {once:true});
-    // Fallback : si Firebase ne répond pas en 4s, afficher login
-    setTimeout(()=>{
-      if(!currentUser){
-        showLoading(false);
-        document.getElementById('login-page').style.display='flex';
-      }
-    }, 4000);
-  }
+  // tryAutoLogin gère lui-même l'attente Firebase via waitForFirebase()
+  tryAutoLogin();
 });
 </script>
 </body>
