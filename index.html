@@ -28,13 +28,36 @@
   const db   = getFirestore(app);
   const auth = getAuth(app);
 
-  // ── Expose sur window pour les scripts classiques ──
-  window._fbDb   = db;
-  window._fbAuth = auth;
-  window._fbSDK  = { collection, doc, setDoc, getDoc, getDocs, deleteDoc,
-                     createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut };
+  // ── Exposer des fonctions directes sur window (pas d'indirection SDK) ──
   window._fbReady = true;
-  // Notifier l'app
+  window._fbAuth  = auth;
+
+  window._fbSave = async (col, id, data) => {
+    await setDoc(doc(db, col, String(id)), data);
+  };
+  window._fbDelete = async (col, id) => {
+    await deleteDoc(doc(db, col, String(id)));
+  };
+  window._fbGetAll = async (col) => {
+    const snap = await getDocs(collection(db, col));
+    return snap.docs.map(d => ({...d.data(), _fbid: d.id}));
+  };
+  window._fbGetOne = async (col, id) => {
+    const snap = await getDoc(doc(db, col, String(id)));
+    return snap.exists() ? snap.data() : null;
+  };
+  window._fbSignIn = async (email, pass) => {
+    return signInWithEmailAndPassword(auth, email, pass);
+  };
+  window._fbCreateUser = async (email, pass) => {
+    return createUserWithEmailAndPassword(auth, email, pass);
+  };
+  window._fbSignOut = async () => {
+    return signOut(auth);
+  };
+
+  // Notifier l'app que Firebase est prêt
+  window._fbReady = true;
   document.dispatchEvent(new Event('firebase-ready'));
 </script>
 
@@ -625,46 +648,33 @@ let currentMode='especes',editingArticleId=null,editingUserId=null,lastTransacti
 const SESSION_KEY='caisse_session';
 
 // ─── FIRESTORE (Firebase v10) ───
-function getDB(){ return window._fbDb; }
-function getSDK(){ return window._fbSDK; }
-
+// ── Wrappers Firebase — appellent directement les fonctions exposées par le module ES ──
 async function fbSave(col, id, data){
-  try{
-    const {doc, setDoc} = getSDK();
-    await setDoc(doc(getDB(), col, String(id)), data);
-  }catch(e){ console.error('fbSave', col, id, e); }
+  try{ await window._fbSave(col, id, data); }
+  catch(e){ console.error('fbSave', col, id, e); }
 }
 async function fbDelete(col, id){
-  try{
-    const {doc, deleteDoc} = getSDK();
-    await deleteDoc(doc(getDB(), col, String(id)));
-  }catch(e){ console.error('fbDelete', e); }
+  try{ await window._fbDelete(col, id); }
+  catch(e){ console.error('fbDelete', e); }
 }
 async function fbGetAll(col){
-  try{
-    const {collection, getDocs} = getSDK();
-    const snap = await getDocs(collection(getDB(), col));
-    return snap.docs.map(d => ({...d.data(), _fbid: d.id}));
-  }catch(e){ console.warn('fbGetAll', col, e); return []; }
+  try{ return await window._fbGetAll(col); }
+  catch(e){ console.warn('fbGetAll', col, e); return []; }
 }
 
 // ─── ATTENTE FIREBASE PRÊT ───
-// Retourne une Promise qui se résout dès que window._fbDb est disponible.
-// Timeout de 8 secondes pour éviter un blocage infini.
+// Retourne une Promise qui se résout dès que Firebase est prêt.
 function waitForFirebase(){
   return new Promise((resolve, reject) => {
-    if(window._fbReady && window._fbDb && window._fbSDK){
-      resolve(); return;
-    }
+    if(window._fbReady && window._fbSave){ resolve(); return; }
+    const onReady = () => { cleanup(); resolve(); };
+    document.addEventListener('firebase-ready', onReady);
     const start = Date.now();
     const iv = setInterval(() => {
-      if(window._fbReady && window._fbDb && window._fbSDK){
-        clearInterval(iv); resolve();
-      } else if(Date.now() - start > 15000){
-        clearInterval(iv);
-        reject(new Error('Firebase timeout — vérifiez votre connexion internet'));
-      }
-    }, 50);
+      if(window._fbReady && window._fbSave){ cleanup(); resolve(); }
+      else if(Date.now() - start > 20000){ cleanup(); reject(new Error('Firebase timeout')); }
+    }, 100);
+    function cleanup(){ clearInterval(iv); document.removeEventListener('firebase-ready', onReady); }
   });
 }
 
@@ -708,14 +718,12 @@ async function doLogin(){
   // Si l'utilisateur a un email, tenter la connexion Firebase Auth
   if(found.email && found.email.includes('@')){
     try{
-      const {signInWithEmailAndPassword} = getSDK();
-      await signInWithEmailAndPassword(window._fbAuth, found.email, p);
+            await window._fbSignIn(found.email, p);
       console.log('Firebase Auth OK pour', found.email);
     }catch(authErr){
       // Auth échoue (compte pas encore créé) → on crée le compte Auth
       try{
-        const {createUserWithEmailAndPassword} = getSDK();
-        await createUserWithEmailAndPassword(window._fbAuth, found.email, p);
+                const cred = await window._fbCreateUser(found.email, p);
         console.log('Firebase Auth compte créé pour', found.email);
       }catch(createErr){
         console.warn('Firebase Auth:', createErr.message);
@@ -739,16 +747,9 @@ async function doLogin(){
 }
 
 async function tryAutoLogin(){
+  if(window._appStarted) return; window._appStarted = true;
   showLoading(true); animateProgress();
-  try{
-    await waitForFirebase();
-  } catch(e){
-    console.error('Firebase indisponible:', e);
-    // On tente quand même avec un user local de secours
-    currentUser = {id:'u0', username:'Valerie', fullname:'Valérie', role:'admin'};
-    launchApp();
-    return;
-  }
+  // Firebase est garanti prêt ici (appelé seulement après le polling dans DOMContentLoaded)
   try{ await ensureDefaultAdmin(); }catch(e){ console.warn('ensureDefaultAdmin:', e); }
   const fbUsers = await fbGetAll('pos_users').catch(()=>[]);
   const found = fbUsers.find(x => x.username==='Valerie') || {
@@ -780,8 +781,8 @@ function doLogout(){
     }).catch(()=>{});
   }
   // Déconnexion Firebase Auth si disponible
-  if(window._fbAuth && window._fbSDK){
-    window._fbSDK.signOut(window._fbAuth).catch(()=>{});
+  if(window._fbAuth && window._fbSignOut){
+    window._fbSignOut().catch(()=>{});
   }
   sessionStorage.removeItem(SESSION_KEY);
   currentUser = null;
@@ -1178,8 +1179,7 @@ async function addUser(){
     // Si un email est fourni, créer le compte dans Firebase Auth
     if(email && email.includes('@')){
       try{
-        const {createUserWithEmailAndPassword} = getSDK();
-        const cred = await createUserWithEmailAndPassword(window._fbAuth, email, pass);
+                const cred = await window._fbCreateUser(email, pass);
         nu.firebaseUid = cred.user.uid;
         console.log('Compte Auth créé:', cred.user.uid);
       }catch(authErr){
@@ -1502,8 +1502,18 @@ document.addEventListener('DOMContentLoaded',()=>{
   initTheme();
   document.getElementById('loading-screen').style.display='flex';
   document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
-  // tryAutoLogin gère lui-même l'attente Firebase via waitForFirebase()
-  tryAutoLogin();
+  // Polling simple : tenter toutes les 100ms jusqu'à ce que Firebase soit prêt (max 20s)
+  const start = Date.now();
+  const iv = setInterval(()=>{
+    if(window._fbReady && window._fbSave){
+      clearInterval(iv);
+      tryAutoLogin();
+    } else if(Date.now()-start > 20000){
+      clearInterval(iv);
+      // Firebase jamais chargé : lancer quand même en mode dégradé
+      tryAutoLogin();
+    }
+  }, 100);
 });
 </script>
 </body>
