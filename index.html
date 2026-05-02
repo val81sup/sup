@@ -796,18 +796,34 @@ function completeProgress(){document.getElementById('ls-bar').style.width='100%'
 
 // ─── LAUNCH ───
 async function launchApp(){
-  showLoading(true);animateProgress();
-  const [fbUsers,fbArts,fbCats,fbTx,fbLogs]=await Promise.all([fbGetAll('pos_users'),fbGetAll('pos_articles'),fbGetAll('pos_categories'),fbGetAll('pos_transactions'),fbGetAll('pos_connlog')]);
-  users=fbUsers;articles=fbArts;categories=fbCats;
-  transactions=fbTx.sort((a,b)=>new Date(b.date)-new Date(a.date));
-  connLog=fbLogs.sort((a,b)=>new Date(b.loginTime)-new Date(a.loginTime));
+  showLoading(true); animateProgress();
+  try{
+    const [fbUsers,fbArts,fbCats,fbTx,fbLogs] = await Promise.all([
+      fbGetAll('pos_users'), fbGetAll('pos_articles'), fbGetAll('pos_categories'),
+      fbGetAll('pos_transactions'), fbGetAll('pos_connlog')
+    ]);
+    users=fbUsers; articles=fbArts; categories=fbCats;
+    transactions=fbTx.sort((a,b)=>new Date(b.date)-new Date(a.date));
+    connLog=fbLogs.sort((a,b)=>new Date(b.loginTime)-new Date(a.loginTime));
+  } catch(e){
+    console.warn('launchApp data load error (continuing):', e);
+    users=[]; articles=[]; categories=[]; transactions=[]; connLog=[];
+  }
   completeProgress();
   setTimeout(()=>{
-    showLoading(false);document.getElementById('app').style.display='block';
-    document.getElementById('tb-username').textContent=currentUser.fullname||currentUser.username;
-    updateCaisseDate();buildCaisseSelects();renderArticlesPage();renderHistorique();
-    applyRoleRestrictions();startAutoLogout();loadAchats();initTheme();
-  },300);
+    try{
+      showLoading(false);
+      document.getElementById('app').style.display='block';
+      document.getElementById('tb-username').textContent=currentUser.fullname||currentUser.username;
+      updateCaisseDate(); buildCaisseSelects(); renderArticlesPage(); renderHistorique();
+      applyRoleRestrictions(); startAutoLogout(); loadAchats(); initTheme();
+    } catch(e){
+      console.error('launchApp render error:', e);
+      // Forcer l'affichage même si un render plante
+      showLoading(false);
+      document.getElementById('app').style.display='block';
+    }
+  }, 300);
 }
 
 // ─── TABS ───
